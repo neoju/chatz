@@ -1,0 +1,9 @@
+node_modules
+dist
+build
+.svelte-kit
+.turbo
+.sisyphus
+pnpm-lock.yaml
+coverage
+*.min.js

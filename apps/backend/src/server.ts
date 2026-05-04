@@ -2,11 +2,11 @@ import Fastify from 'fastify';
 
 const server = Fastify({ logger: true });
 
-server.get('/health', async () => {
+server.get('/health', () => {
   return { status: 'ok', timestamp: new Date().toISOString() };
 });
 
-server.get('/', async () => {
+server.get('/', () => {
   return { message: 'chatz backend is running' };
 });
 

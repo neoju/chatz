@@ -1,0 +1,11 @@
+{
+  "name": "@chatz/typescript-config",
+  "version": "0.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "files": [
+    "base.json",
+    "fastify.json",
+    "svelte.json"
+  ]
+}
