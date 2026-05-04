@@ -1,10 +1,10 @@
 # Development Roadmap
 
 ## Phase 1: Infrastructure & Environment Setup
-- [ ] **Initialize the Repository:** Set up a turborepo with `/frontend` and `/backend` directories.
-- [ ] **Dockerize the Backend:** Create a multi-stage Node.js `Dockerfile` (`node:22-alpine` base) for the Fastify API + WebSocket server. Run as a non-root user.
-- [ ] **Build the Frontend SPA:** Create a multi-stage `Dockerfile` for Svelte that builds the static SPA (`adapter-static`) inside a `node:22-alpine` builder stage and publishes the compiled `build/` output to a shared Docker volume. **No runtime web server in the frontend image** — Caddy serves the static files directly. The image's only job is producing build artifacts on container start, then exiting (or running a no-op `tail -f` for development hot-reload workflows).
-- [ ] **Configure Caddy as the Single Edge + Static Server:** Write a `Caddyfile` that handles SSL, reverse-proxies `/api/*` and `/ws/*` to the backend, and serves the Svelte SPA directly from the shared volume (no internal Nginx hop). Key rules to avoid the common WebSocket footguns:
+- [x] **Initialize the Repository:** Set up a turborepo with `/frontend` and `/backend` directories.
+- [x] **Dockerize the Backend:** Create a multi-stage Node.js `Dockerfile` (`node:22-alpine` base) for the Fastify API + WebSocket server. Run as a non-root user.
+- [x] **Build the Frontend SPA:** Create a multi-stage `Dockerfile` for Svelte that builds the static SPA (`adapter-static`) inside a `node:22-alpine` builder stage and publishes the compiled `build/` output to a shared Docker volume. **No runtime web server in the frontend image** — Caddy serves the static files directly. The image's only job is producing build artifacts on container start, then exiting (or running a no-op `tail -f` for development hot-reload workflows).
+- [x] **Configure Caddy as the Single Edge + Static Server:** Write a `Caddyfile` that handles SSL, reverse-proxies `/api/*` and `/ws/*` to the backend, and serves the Svelte SPA directly from the shared volume (no internal Nginx hop). Key rules to avoid the common WebSocket footguns:
   - Use `http://` (not `ws://`) in the upstream address — Caddy auto-handles the `Upgrade` header; don't override it manually.
   - Add `read_timeout` / `write_timeout` for long-lived sockets.
   - Use `try_files {path} /index.html` for SPA client-side routing fallback (replaces SvelteKit's server-side `fallback: '200.html'` need).
@@ -37,7 +37,7 @@
         }
     }
     ```
-- [ ] **Orchestrate with Docker Compose:** Write the `docker-compose.yml` to stitch together MongoDB, Redis, the Node backend, the frontend builder (publishes to a shared `frontend_dist` volume), and Caddy (mounts the same volume read-only at `/srv/frontend`). Caddy is the **only** web-facing container. Persistent volumes: `mongo_data`, `redis_data`, `caddy_data` (TLS certs), `frontend_dist`.
+- [x] **Orchestrate with Docker Compose:** Write the `docker-compose.yml` to stitch together MongoDB, Redis, the Node backend, the frontend builder (publishes to a shared `frontend_dist` volume), and Caddy (mounts the same volume read-only at `/srv/frontend`). Caddy is the **only** web-facing container. Persistent volumes: `mongo_data`, `redis_data`, `caddy_data` (TLS certs), `frontend_dist`.
 
 ## Phase 2: Data Modeling (MongoDB & Redis)
 - [ ] **User Schema:** Define the MongoDB schema for Users (email, hashed password, display name/avatar).
@@ -65,7 +65,7 @@
   - Broadcasting video call ring/join events (the payload carries the Daily room name + token).
 
 ## Phase 4: Frontend Development (Svelte)
-- [ ] **Project Setup:** Initialize the SvelteKit application using `adapter-static`. Set `fallback: '200.html'` and `export const ssr = false` in the root `+layout.js` so client-side routing works on refresh.
+- [x] **Project Setup:** Initialize the SvelteKit application using `adapter-static`. Set `fallback: '200.html'` and `export const ssr = false` in the root `+layout.ts` so client-side routing works on refresh.
 - [ ] **Auth Flow:** Build the Login/Register UI, handle API calls, and store the resulting JWT securely (httpOnly cookie preferred; if using `localStorage`, accept the XSS trade-off).
 - [ ] **Svelte Stores for State:** Create reactive stores for:
   - The active WebSocket connection (with auto-reconnect + exponential backoff).
