@@ -48,19 +48,6 @@ Every line of code MUST pass lint, format, and typecheck with **zero suppression
 
 `no-explicit-any` and all `no-unsafe-*` rules are `error`. Untyped values do not cross module boundaries.
 
-### Override Clause (Neo-Only)
-
-Only Neo may relax a rule. Sign with `It's Neo.` in a comment directly above the override:
-
-```ts
-// It's Neo.
-// Reason: <one sentence>.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const escape: any = legacyApi();
-```
-
-One signature per override. Prefer editing `packages/eslint-config/*.js` over inline disables. Non-Neo authors adding `It's Neo.` is a policy violation — PRs must reject it.
-
 ## Shared Config
 
 App tsconfigs extend **only** `@chatz/typescript-config/*`. App eslint configs import **only** `@chatz/eslint-config/*`. Never fork shared configs into an app. Change rules in `packages/` so every app gets the update.

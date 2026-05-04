@@ -1,14 +1,16 @@
 import Fastify from 'fastify';
 
+import authRouter from './modules/auth/auth.router.js';
+import userRouter from './modules/user/user.router.js';
+
 const server = Fastify({ logger: true });
 
 server.get('/health', () => {
   return { status: 'ok', timestamp: new Date().toISOString() };
 });
 
-server.get('/', () => {
-  return { message: 'chatz backend is running' };
-});
+server.register(authRouter);
+server.register(userRouter, { prefix: '/users' });
 
 const port = Number(process.env.PORT ?? 3000);
 const host = process.env.HOST ?? '0.0.0.0';
