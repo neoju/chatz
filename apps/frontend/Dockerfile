@@ -17,5 +17,4 @@ RUN pnpm --filter frontend run build
 FROM alpine:3.20 AS publisher
 RUN apk add --no-cache rsync
 COPY --from=builder /app/apps/frontend/build /build
-USER nobody
 CMD ["sh", "-c", "rsync -a --delete /build/ /srv/frontend/ && tail -f /dev/null"]
