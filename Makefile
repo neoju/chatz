@@ -4,7 +4,7 @@ dev:
 	pnpm dev
 
 dev-docker:
-	docker compose -f docker-compose.dev.yml up --build -d
+	docker compose -f docker-compose.dev.yml up --build
 
 migrate:
 	@echo "[migrate] No migrations defined yet (Phase 2 will add MongoDB schemas)."
