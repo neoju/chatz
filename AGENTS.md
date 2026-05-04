@@ -13,17 +13,18 @@ Infra: MongoDB 7, Redis 7 (pub/sub + presence), Caddy 2 (reverse proxy + static 
 
 ## Commands
 
-| What | Root | Per-app |
-|---|---|---|
-| Dev | `pnpm dev` | `pnpm --filter backend dev` / `pnpm --filter frontend dev` |
-| Build | `pnpm build` | `pnpm --filter <app> build` |
-| Lint | `pnpm lint` | `pnpm --filter <app> lint` |
-| Typecheck | `pnpm check-types` | `pnpm --filter <app> check-types` |
-| Format | `pnpm format` / `pnpm format:check` | `pnpm --filter <app> format` |
+| What      | Root                                | Per-app                                                    |
+| --------- | ----------------------------------- | ---------------------------------------------------------- |
+| Dev       | `pnpm dev`                          | `pnpm --filter backend dev` / `pnpm --filter frontend dev` |
+| Build     | `pnpm build`                        | `pnpm --filter <app> build`                                |
+| Lint      | `pnpm lint`                         | `pnpm --filter <app> lint`                                 |
+| Typecheck | `pnpm check-types`                  | `pnpm --filter <app> check-types`                          |
+| Format    | `pnpm format` / `pnpm format:check` | `pnpm --filter <app> format`                               |
 
 Local services (Mongo + Redis): `make dev-docker` or `docker compose -f docker-compose.dev.yml up`.
 
 **Pre-push gate** (all must pass, in order):
+
 ```sh
 pnpm format && pnpm lint && pnpm check-types && pnpm build
 ```
@@ -36,12 +37,12 @@ Every line of code MUST pass lint, format, and typecheck with **zero suppression
 
 ### Forbidden
 
-| Category | Banned patterns |
-|---|---|
-| TS suppressions | `// @ts-ignore`, `// @ts-expect-error`, `// @ts-nocheck` |
+| Category            | Banned patterns                                                   |
+| ------------------- | ----------------------------------------------------------------- |
+| TS suppressions     | `// @ts-ignore`, `// @ts-expect-error`, `// @ts-nocheck`          |
 | ESLint suppressions | `// eslint-disable*`, `/* eslint-disable */`, file-level disables |
-| Type escape hatches | `as any`, `as unknown as T`, `: any` annotations |
-| Test failures | Disabling tests, deleting assertions, commenting out broken code |
+| Type escape hatches | `as any`, `as unknown as T`, `: any` annotations                  |
+| Test failures       | Disabling tests, deleting assertions, commenting out broken code  |
 
 `ban-ts-comment` is set to `minimumDescriptionLength: 9999` — no description satisfies it. Intentional.
 
@@ -67,11 +68,13 @@ App tsconfigs extend **only** `@chatz/typescript-config/*`. App eslint configs i
 ### Config details
 
 **ESLint** (`packages/eslint-config/`):
+
 - `base.js` — strict typed-linting, `ban-ts-comment`, `no-explicit-any`, full `no-unsafe-*` suite, promise hygiene (`no-floating-promises`, `no-misused-promises`, `await-thenable`, `require-await`)
 - `fastify.js` — adds Node globals, relaxes `require-await` and `misused-promises` for async handlers
 - `svelte.js` — adds Svelte parser + browser globals + `eslint-plugin-svelte/flat/recommended`, relaxes some `no-unsafe-*` in `.svelte` files
 
 **TypeScript** (`packages/typescript-config/`):
+
 - `base.json` — `strict`, `noUncheckedIndexedAccess`, `noUnusedLocals`, `noUnusedParameters`, `noImplicitReturns`, `useUnknownInCatchVariables`
 - `fastify.json` — extends base, adds `@types/node`, `NodeNext` modules
 - `svelte.json` — extends base, `ESNext` + DOM libs, bundler resolution, `allowJs`/`checkJs`

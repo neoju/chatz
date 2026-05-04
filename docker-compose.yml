@@ -5,7 +5,7 @@ services:
     volumes:
       - mongo_data:/data/db
     healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping').ok"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -17,7 +17,7 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 3s
       retries: 5
@@ -30,14 +30,20 @@ services:
     environment:
       NODE_ENV: production
       HOST: 0.0.0.0
-      PORT: "3000"
+      PORT: '3000'
     depends_on:
       mongo:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "require('http').get('http://localhost:3000/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+        ]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -47,7 +53,7 @@ services:
     build:
       context: .
       dockerfile: apps/frontend/Dockerfile
-    restart: "no"
+    restart: 'no'
     volumes:
       - frontend_dist:/srv/frontend
 
@@ -55,9 +61,9 @@ services:
     image: caddy:2-alpine
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
     environment:
       CADDY_SITE_ADDRESS: ${CADDY_SITE_ADDRESS:-:80}
     volumes:
