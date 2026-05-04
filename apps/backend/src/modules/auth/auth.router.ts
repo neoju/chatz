@@ -1,33 +1,50 @@
-import { FastifyInstance } from "fastify";
+import { FastifyInstance } from 'fastify';
+
+import {
+  LoginRequestSchema,
+  RegisterRequestSchema,
+  AuthResponseSchema,
+  type LoginRequest,
+  type RegisterRequest
+} from '@chatz/dto';
+
+import authService from './auth.service.js';
 
 export default function authRouter(app: FastifyInstance) {
-  app.post("/login", {
-    schema: {
-      body: {
-        type: "object",
-        required: ["email", "password"],
-        properties: {
-          email: { type: "string", format: "email" },
-          password: { type: "string", minLength: 6 },
-        }
-      }
-    }
-  }, () => {
-    return { message: "Login endpoint" };
-  })
+  const service = authService(app);
 
-  app.post("/register", {
-    schema: {
-      body: {
-        type: "object",
-        required: ["email", "password"],
-        properties: {
-          email: { type: "string", format: "email" },
-          password: { type: "string", minLength: 6 },
+  app.post<{ Body: LoginRequest }>(
+    '/login',
+    {
+      schema: {
+        body: LoginRequestSchema,
+        response: {
+          200: AuthResponseSchema
         }
       }
+    },
+    async (req, res) => {
+      const { email, password } = req.body;
+      const token = await service.login(email, password);
+
+      res.code(200).send({ token });
     }
-  }, () => {
-    return { message: "Register endpoint" };
-  })
+  );
+
+  app.post<{ Body: RegisterRequest }>(
+    '/register',
+    {
+      schema: {
+        body: RegisterRequestSchema,
+        response: {
+          201: AuthResponseSchema
+        }
+      }
+    },
+    async (req, res) => {
+      const token = await service.register(req.body);
+
+      res.code(201).send({ token });
+    }
+  );
 }

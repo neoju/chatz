@@ -13,8 +13,8 @@ erDiagram
     USER {
         ObjectId id
         string email
-        string passwordHash
-        string displayName
+        string password
+        string nickname
         string avatarUrl
         string status
         Date lastSeenAt
@@ -116,36 +116,36 @@ erDiagram
 
 #### `users` collection
 
-| Index Name           | Fields          | Type     | Why                                                                                            |
-| -------------------- | --------------- | -------- | ---------------------------------------------------------------------------------------------- |
-| `users_email_unique` | `{ email: 1 }`  | Unique   | Login lookup by email. Enforces account uniqueness. Equality-only query.                       |
+| Index Name           | Fields         | Type   | Why                                                                      |
+| -------------------- | -------------- | ------ | ------------------------------------------------------------------------ |
+| `users_email_unique` | `{ email: 1 }` | Unique | Login lookup by email. Enforces account uniqueness. Equality-only query. |
 
 #### `messages` collection
 
-| Index Name                   | Fields                                                                                                             | Type     | Why                                                                                                                                                                                                         
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
-| `msg_conv_sentAt_id`         | `{ conversationId: 1, sentAt: -1, _id: -1 }`                                                                       | Standard | **Message pagination** — the primary messages read path. Equality on `conversationId` (E), descending sort on `sentAt` then `_id` (S) enables efficient cursor-based backward pagination. The `_id` tiebreaker prevents sort instability when multiple messages share the same sentAt millisecond. Covers the entire scrollback query. |
+| Index Name           | Fields                                       | Type     | Why                                                                                                                                                                                                                                                                                                                                    |
+| -------------------- | -------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `msg_conv_sentAt_id` | `{ conversationId: 1, sentAt: -1, _id: -1 }` | Standard | **Message pagination** — the primary messages read path. Equality on `conversationId` (E), descending sort on `sentAt` then `_id` (S) enables efficient cursor-based backward pagination. The `_id` tiebreaker prevents sort instability when multiple messages share the same sentAt millisecond. Covers the entire scrollback query. |
 
 #### `message_attachments` collection
 
-| Index Name               | Fields                                                 | Type     | Why                                                                                                                             |
-| ------------------------ | ------------------------------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `att_msgId_1`            | `{ messageId: 1 }`                                     | Standard | Fetch all attachments for a specific message.                                                                                   |
-| `att_convId_createdAt`   | `{ conversationId: 1, createdAt: -1 }`                 | Standard | Fetch all attachments in a conversation, sorted by upload time (for "media gallery" feature).                                 |
+| Index Name             | Fields                                 | Type     | Why                                                                                           |
+| ---------------------- | -------------------------------------- | -------- | --------------------------------------------------------------------------------------------- |
+| `att_msgId_1`          | `{ messageId: 1 }`                     | Standard | Fetch all attachments for a specific message.                                                 |
+| `att_convId_createdAt` | `{ conversationId: 1, createdAt: -1 }` | Standard | Fetch all attachments in a conversation, sorted by upload time (for "media gallery" feature). |
 
 #### `conversation_members` collection
 
-| Index Name                | Fields                                     | Type     | Why                                                                                                                                                                                                         
-| ------------------------- | ------------------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
-| `cm_userId_convId_unique` | `{ userId: 1, conversationId: 1 }`         | Unique   | **Upsert membership** — primary key of the relationship. Enforces one document per (user, conversation) pair. Used for both point lookups and updates. E on both fields.                                                                                                                                                                                                         
-| `cm_convId_1`             | `{ conversationId: 1 }`                    | Standard | Fetch all member records for a conversation (e.g., to compute total unread, to deliver read receipt events to other participants, or to list members for an admin view).                                                                                                                                                                                                         
+| Index Name                | Fields                                     | Type     | Why                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ------------------------- | ------------------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `cm_userId_convId_unique` | `{ userId: 1, conversationId: 1 }`         | Unique   | **Upsert membership** — primary key of the relationship. Enforces one document per (user, conversation) pair. Used for both point lookups and updates. E on both fields.                                                                                                                                                                                                                               |
+| `cm_convId_1`             | `{ conversationId: 1 }`                    | Standard | Fetch all member records for a conversation (e.g., to compute total unread, to deliver read receipt events to other participants, or to list members for an admin view).                                                                                                                                                                                                                               |
 | `cm_userId_pinned`        | `{ userId: 1, pinned: -1, updatedAt: -1 }` | Standard | Sidebar with pinned conversations sorted to top, then sorted by recent activity within each pin group. ESR: E on `userId`, S on `pinned` (DESC → pinned=true first) then `updatedAt`. For the full sidebar query, this is step one — conversation-level recency (`conversations.updatedAt`) is resolved in step two by fetching the actual `conversations` documents and sorting those by `updatedAt`. |
 
 #### `group_invites` collection
 
 | Index Name                       | Fields                                                                                          | Type                          | Why                                                                                                                                                                     |
 | -------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `gi_invitee_status`              | `{ inviteeId: 1, status: 1, , createdAt: -1 }`                                                                   | Standard                      | **Pending invites for a user** — show incoming invitations on login or notification. E on `inviteeId`, E on `status` (values: `"pending"`, `"accepted"`, `"declined"`). |
+| `gi_invitee_status`              | `{ inviteeId: 1, status: 1, , createdAt: -1 }`                                                  | Standard                      | **Pending invites for a user** — show incoming invitations on login or notification. E on `inviteeId`, E on `status` (values: `"pending"`, `"accepted"`, `"declined"`). |
 | `gi_conv_invitee_pending_unique` | `{ conversationId: 1, inviteeId: 1 }` with `{ partialFilterExpression: { status: "pending" } }` | Partial Unique                | **Prevent duplicate pending invites** — one active invite per (conversation, invitee) pair. Partial so accepted/declined invites don't block re-invitation.             |
 | `gi_expiresAt_ttl`               | `{ expiresAt: 1 }`                                                                              | TTL (`expireAfterSeconds: 0`) | Automatic purge of expired invites.                                                                                                                                     |
 
@@ -202,13 +202,13 @@ Storing a `readBy` array on every message does not scale for group chats. A grou
 Cursor pagination uses a stable anchor point:
 
 ```javascript
-db.messages.find({
-  conversationId: conversationId,
-  $or: [
-    { sentAt: { $lt: cursorSentAt } },
-    { sentAt: cursorSentAt, _id: { $lt: cursorId } }
-  ]
-}).sort({ sentAt: -1, _id: -1 }).limit(50)
+db.messages
+  .find({
+    conversationId: conversationId,
+    $or: [{ sentAt: { $lt: cursorSentAt } }, { sentAt: cursorSentAt, _id: { $lt: cursorId } }]
+  })
+  .sort({ sentAt: -1, _id: -1 })
+  .limit(50);
 ```
 
 This is always an index range scan starting from `cursorSentAt`, regardless of how many messages precede it. Performance is O(log n + page_size) at any depth.
@@ -231,4 +231,3 @@ The bucket pattern (grouping N messages per document by time window) optimizes w
 - Fetching a single message by `_id` for reply previews requires knowing which bucket it lives in.
 
 The flat collection with a `{ conversationId: 1, sentAt: -1 }` index handles millions of messages efficiently. MongoDB's b-tree range scans are fast; the bottleneck at scale is typically network I/O and application-layer serialization, not MongoDB scan performance on a well-indexed collection.
-

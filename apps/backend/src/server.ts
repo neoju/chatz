@@ -1,19 +1,37 @@
 import Fastify from 'fastify';
+import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 
-import authRouter from './modules/auth/auth.router.js';
-import userRouter from './modules/user/user.router.js';
+import configEnv from '@/plugins/config.js';
+import mongoose from '@/plugins/mongoose.js';
+import providerZod from '@/plugins/provider-zod.js';
 
-const server = Fastify({ logger: true });
+import authMiddleware from '@/middlewares/auth.js';
+
+import authRouter from '@/modules/auth/auth.router.js';
+import userRouter from '@/modules/user/user.router.js';
+
+const server = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
+
+await configEnv(server);
+server.register(mongoose);
+server.register(providerZod);
+
+server.register(authRouter, { prefix: '/api' });
+server.register(
+  async function (app) {
+    await app.register(authMiddleware);
+
+    app.register(userRouter, { prefix: '/users' });
+  },
+  { prefix: '/api' }
+);
 
 server.get('/health', () => {
   return { status: 'ok', timestamp: new Date().toISOString() };
 });
 
-server.register(authRouter);
-server.register(userRouter, { prefix: '/users' });
-
-const port = Number(process.env.PORT ?? 3000);
-const host = process.env.HOST ?? '0.0.0.0';
+const port = Number(server.config.PORT);
+const host = server.config.HOST;
 
 server
   .listen({ port, host })

@@ -1,13 +1,18 @@
+import { User } from './user.schema.js';
 
-export function getUserById(userId: string) {
-}
-
-export function createUser(email: string, password: string) {
-}
-
-export function getUserProfile(userId: string) {
-  return {
-    id: userId,
-    avatar: 'test.png'
+export async function getUserProfile(userId: string) {
+  if (!userId) {
+    return null;
   }
+
+  const user = await User.findById(userId).exec();
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  return {
+    id: user.id,
+    email: user.email
+  };
 }
