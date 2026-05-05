@@ -5,6 +5,30 @@ import { randomBytes, createHash } from 'node:crypto';
 import { User } from '@/modules/user/user.schema.js';
 import type { ResetTokenData } from './password-reset.types.js';
 
+/**
+ * Atomically invalidates all prior tokens for a user and sets a new one.
+ * Eliminates the TOCTOU race between smembers + multi/exec.
+ */
+const LUA_RESET_TOKEN = `
+local userSetKey = KEYS[1]
+local tokenKey = KEYS[2]
+local userId = ARGV[1]
+local tokenHash = ARGV[2]
+local ttl = tonumber(ARGV[3])
+
+local existingHashes = redis.call('SMEMBERS', userSetKey)
+for _, hash in ipairs(existingHashes) do
+  redis.call('DEL', 'pw_reset:' .. hash)
+end
+
+redis.call('SET', tokenKey, userId, 'EX', ttl)
+redis.call('DEL', userSetKey)
+redis.call('SADD', userSetKey, tokenHash)
+redis.call('EXPIRE', userSetKey, ttl)
+
+return 1
+`;
+
 export default (app: FastifyInstance) => ({
   async createResetToken(email: string): Promise<ResetTokenData | null> {
     const user = await User.findOne({ email });
@@ -19,25 +43,12 @@ export default (app: FastifyInstance) => ({
     const tokenized = rawToken.toString('base64url');
     const username = user.nickname;
 
-    const ttl = Number(app.config.PASSWORD_RESET_TTL_SECONDS);
+    const ttl = Number(app.config.PWDRS_TTL);
     const userSetKey = `pw_reset:user:${userId}`;
     const tokenKey = `pw_reset:${tokenHash}`;
 
-    // Invalidate any prior tokens for this user
-    const existingHashes = await app.redis.smembers(userSetKey);
-    const pipeline = app.redis.multi();
-
-    for (const oldHash of existingHashes) {
-      pipeline.del(`pw_reset:${oldHash}`);
-    }
-
-    // Store new token atomically
-    pipeline.set(tokenKey, userId, 'EX', ttl);
-    pipeline.del(userSetKey);
-    pipeline.sadd(userSetKey, tokenHash);
-    pipeline.expire(userSetKey, ttl);
-
-    await pipeline.exec();
+    const NUM_KEYS = 2; // KEYS[1] = userSetKey, KEYS[2] = tokenKey
+    await app.redis.eval(LUA_RESET_TOKEN, NUM_KEYS, userSetKey, tokenKey, userId, tokenHash, String(ttl));
 
     app.log.info({ tokenHash, userId }, 'Password reset token created');
 
@@ -63,8 +74,8 @@ export default (app: FastifyInstance) => ({
 
   async checkEmailRateLimit(email: string): Promise<boolean> {
     const key = `rl:pw_reset:email:${email}`;
-    const limit = Number(app.config.PASSWORD_RESET_RATE_LIMIT_PER_EMAIL);
-    const window = Number(app.config.PASSWORD_RESET_RATE_LIMIT_WINDOW_SECONDS);
+    const limit = Number(app.config.PWDRS_RATE_LIMIT_PER_EMAIL);
+    const window = Number(app.config.PWDRS_RATE_LIMIT_COOLDOWN_SEC);
 
     const count = await app.redis.incr(key);
 
@@ -80,15 +91,16 @@ export default (app: FastifyInstance) => ({
   },
 
   async handleForgotPassword(email: string): Promise<void> {
-    const allowed = await this.checkEmailRateLimit(email);
+    const normalizedEmail = email.toLowerCase();
+    const allowed = await this.checkEmailRateLimit(normalizedEmail);
     if (!allowed) {
       return;
     }
 
-    const tokenData = await this.createResetToken(email);
+    const tokenData = await this.createResetToken(normalizedEmail);
     if (tokenData) {
       const resetLink = `${app.config.FRONTEND_URL}/reset-password?token=${tokenData.tokenized}`;
-      await app.emailService.sendPasswordResetEmail(email, tokenData.username, resetLink);
+      await app.emailService.sendPasswordResetEmail(normalizedEmail, tokenData.username, resetLink);
     }
   },
 

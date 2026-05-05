@@ -27,7 +27,7 @@ export function createEmailWorker(
 
       app.log.info({ jobId: job.id, jobName: job.name, to: job.data.to }, 'Processing email job');
 
-      const expiresInMinutes = Number(app.config.PASSWORD_RESET_TTL_SECONDS) / 60;
+      const expiresInMinutes = Number(app.config.PWDRS_TTL) / 60;
 
       const template = PasswordResetEmail({
         username: job.data.username,
@@ -64,8 +64,8 @@ export function createEmailWorker(
     }
 
     const failedReason = error.message || 'Email job failed';
-    const shouldMoveToDlq = error instanceof UnrecoverableError ||
-      job.attemptsMade >= (job.opts.attempts ?? 1)
+    const shouldMoveToDlq =
+      error instanceof UnrecoverableError || job.attemptsMade >= (job.opts.attempts ?? 1);
 
     if (!shouldMoveToDlq) {
       app.log.error(
@@ -81,17 +81,17 @@ export function createEmailWorker(
       return;
     }
 
-    dlq.add(job.name, {
-      ...job.data,
-      originalJobName: job.name,
-      originalJobId: job.id,
-      failedReason
-    })
+    dlq
+      .add(job.name, {
+        ...job.data,
+        originalJobName: job.name,
+        originalJobId: job.id,
+        failedReason
+      })
       .then((res) => {
         app.log.error({ jobId: job.id, data: res.data }, 'Email job moved to DLQ');
       })
       .catch((dlqError: unknown) => {
-
         app.log.error({ jobId: job.id, error: dlqError }, 'Failed to move email job to DLQ');
       });
   });

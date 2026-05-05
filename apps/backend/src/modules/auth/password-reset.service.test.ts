@@ -38,36 +38,20 @@ function mockCreateHash() {
 }
 
 function makeMockApp(overrides?: {
-  smembers?: () => Promise<string[]>;
-  exec?: () => Promise<unknown>;
+  eval?: (...args: unknown[]) => Promise<unknown>;
   getdel?: (key: string) => Promise<string | null>;
   srem?: () => Promise<number>;
   incr?: (key: string) => Promise<number>;
   expire?: () => Promise<number>;
 }): FastifyInstance {
-  const delMock = vi.fn().mockReturnThis();
-  const setMock = vi.fn().mockReturnThis();
-  const saddMock = vi.fn().mockReturnThis();
-  const expirePipelineMock = vi.fn().mockReturnThis();
-  const execMock = vi.fn().mockResolvedValue([]);
-
-  const pipeline = {
-    del: delMock,
-    set: setMock,
-    sadd: saddMock,
-    expire: expirePipelineMock,
-    exec: overrides?.exec ? vi.fn().mockImplementation(overrides.exec) : execMock
-  };
-
-  const smembersMock = vi.fn().mockResolvedValue([]);
-  const multiMock = vi.fn().mockReturnValue(pipeline);
+  const evalMock = vi.fn().mockResolvedValue(1);
   const getdelMock = vi.fn().mockResolvedValue(null);
   const sremMock = vi.fn().mockResolvedValue(1);
   const incrMock = vi.fn().mockResolvedValue(1);
   const expireMock = vi.fn().mockResolvedValue(1);
 
-  if (overrides?.smembers) {
-    smembersMock.mockImplementation(overrides.smembers);
+  if (overrides?.eval) {
+    evalMock.mockImplementation(overrides.eval);
   }
   if (overrides?.getdel) {
     getdelMock.mockImplementation(overrides.getdel);
@@ -83,8 +67,7 @@ function makeMockApp(overrides?: {
   }
 
   const redis = {
-    smembers: smembersMock,
-    multi: multiMock,
+    eval: evalMock,
     getdel: getdelMock,
     srem: sremMock,
     incr: incrMock,
@@ -97,9 +80,9 @@ function makeMockApp(overrides?: {
   return {
     redis,
     config: {
-      PASSWORD_RESET_TTL_SECONDS: '900',
-      PASSWORD_RESET_RATE_LIMIT_PER_EMAIL: '3',
-      PASSWORD_RESET_RATE_LIMIT_WINDOW_SECONDS: '3600',
+      PWDRS_TTL: '900',
+      PWDRS_RATE_LIMIT_PER_EMAIL: '3',
+      PWDRS_RATE_LIMIT_COOLDOWN_SEC: '3600',
       FRONTEND_URL: 'https://chatz.example.com'
     },
     emailService: {
@@ -153,25 +136,27 @@ describe('createResetToken', () => {
     expect(result?.rawToken).toBe(RAW_TOKEN);
   });
 
-  it('invalidates prior tokens for the same user', async () => {
-    const oldHash1 = 'oldhash1';
-    const oldHash2 = 'oldhash2';
-
+  it('invalidates prior tokens for the same user atomically via Lua script', async () => {
     mockFindOne.mockResolvedValue({
       _id: { toString: () => USER_ID },
       nickname: USER_NICKNAME
     });
 
-    const app = makeMockApp({
-      smembers: () => Promise.resolve([oldHash1, oldHash2])
-    });
+    const app = makeMockApp();
     const service = makePasswordResetService(app);
 
     await service.createResetToken(USER_EMAIL);
 
-    const pipeline = app.redis.multi();
-    expect(pipeline.del).toHaveBeenCalledWith(`pw_reset:${oldHash1}`);
-    expect(pipeline.del).toHaveBeenCalledWith(`pw_reset:${oldHash2}`);
+    const evalMock = app.redis.eval as Mock;
+    expect(evalMock).toHaveBeenCalledWith(
+      expect.any(String),
+      2,
+      `pw_reset:user:${USER_ID}`,
+      `pw_reset:${TOKEN_HASH}`,
+      USER_ID,
+      TOKEN_HASH,
+      '900'
+    );
   });
 
   it('does not log the raw token', async () => {

@@ -11,14 +11,8 @@ async function redisPlugin(app: FastifyInstance) {
   app.decorate('redis', redis);
 
   app.log.info('Connecting to Redis');
-  await redis
-    .connect()
-    .then(() => {
-      app.log.info('Connected to Redis');
-    })
-    .catch((err: unknown) => {
-      app.log.error({ err }, 'Failed to connect to Redis');
-    });
+  await redis.connect();
+  app.log.info('Connected to Redis');
 
   app.addHook('onClose', function () {
     app.log.info('Disconnecting from Redis');

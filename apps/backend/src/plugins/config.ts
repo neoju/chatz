@@ -17,9 +17,13 @@ declare module 'fastify' {
       SMTP_USER: string;
       SMTP_PASS: string;
       SMTP_SECURE: string;
-      PASSWORD_RESET_TTL_SECONDS: string;
-      PASSWORD_RESET_RATE_LIMIT_PER_EMAIL: string;
-      PASSWORD_RESET_RATE_LIMIT_WINDOW_SECONDS: string;
+
+      /**
+       * PWDRS_ prefix stands for "Password Reset"
+       */
+      PWDRS_TTL: string;
+      PWDRS_RATE_LIMIT_PER_EMAIL: string;
+      PWDRS_RATE_LIMIT_COOLDOWN_SEC: string;
     };
   }
 }
@@ -50,9 +54,9 @@ const schema = {
     SMTP_USER: { type: 'string' },
     SMTP_PASS: { type: 'string' },
     SMTP_SECURE: { type: 'string', default: 'false' },
-    PASSWORD_RESET_TTL_SECONDS: { type: 'string', default: '900' },
-    PASSWORD_RESET_RATE_LIMIT_PER_EMAIL: { type: 'string', default: '3' },
-    PASSWORD_RESET_RATE_LIMIT_WINDOW_SECONDS: { type: 'string', default: '3600' }
+    PWDRS_TTL: { type: 'string', default: '900' },
+    PWDRS_RATE_LIMIT_PER_EMAIL: { type: 'string', default: '3' },
+    PWDRS_RATE_LIMIT_COOLDOWN_SEC: { type: 'string', default: '3600' }
   }
 };
 

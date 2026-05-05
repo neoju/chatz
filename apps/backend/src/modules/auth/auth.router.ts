@@ -61,9 +61,6 @@ export default function authRouter(app: FastifyInstance) {
       schema: {
         body: ForgotPasswordRequestSchema,
         response: { 200: ForgotPasswordResponseSchema }
-      },
-      config: {
-        rateLimit: { max: 5, timeWindow: '1 minute' }
       }
     },
     async (_req, res) => {
