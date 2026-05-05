@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { Button } from "$lib/components/ui/button";
+
   let count = $state(0);
 </script>
 
@@ -9,7 +11,7 @@
 <main>
   <h1>chatz</h1>
   <p>Phase 1 scaffold is up.</p>
-  <button onclick={() => count++}>clicked {count} times</button>
+  <Button onclick={() => count++}>clicked {count} times</Button>
 </main>
 
 <style>

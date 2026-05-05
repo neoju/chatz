@@ -1,3 +1,6 @@
 {
-  "extends": ["@chatz/typescript-config/svelte.json", "./.svelte-kit/tsconfig.json"]
+  "extends": [
+    "@chatz/typescript-config/svelte.json",
+    "./.svelte-kit/tsconfig.json"
+  ]
 }
