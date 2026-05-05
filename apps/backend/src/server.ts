@@ -1,9 +1,12 @@
 import Fastify from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
+import rateLimit from '@fastify/rate-limit';
 
 import configEnv from '@/plugins/config.js';
 import mongoose from '@/plugins/mongoose.js';
 import providerZod from '@/plugins/provider-zod.js';
+import redis from '@/plugins/redis.js';
+import emailPlugin from '@/modules/email/email.plugin.js';
 
 import authMiddleware from '@/middlewares/auth.js';
 
@@ -15,6 +18,9 @@ const server = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
 await configEnv(server);
 server.register(mongoose);
 server.register(providerZod);
+server.register(rateLimit, { max: 100, timeWindow: '1 minute' });
+server.register(redis);
+server.register(emailPlugin);
 
 server.register(authRouter, { prefix: '/api' });
 server.register(

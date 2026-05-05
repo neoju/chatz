@@ -114,48 +114,101 @@ erDiagram
 
 ### 2.1 Index Definitions
 
-#### `users` collection
+##### `msg_conv_sentAt_id`
 
-| Index Name           | Fields         | Type   | Why                                                                      |
-| -------------------- | -------------- | ------ | ------------------------------------------------------------------------ |
-| `users_email_unique` | `{ email: 1 }` | Unique | Login lookup by email. Enforces account uniqueness. Equality-only query. |
-
-#### `messages` collection
-
-| Index Name           | Fields                                       | Type     | Why                                                                                                                                                                                                                                                                                                                                    |
-| -------------------- | -------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `msg_conv_sentAt_id` | `{ conversationId: 1, sentAt: -1, _id: -1 }` | Standard | **Message pagination** — the primary messages read path. Equality on `conversationId` (E), descending sort on `sentAt` then `_id` (S) enables efficient cursor-based backward pagination. The `_id` tiebreaker prevents sort instability when multiple messages share the same sentAt millisecond. Covers the entire scrollback query. |
+- **Fields:** `{ conversationId: 1, sentAt: -1, _id: -1 }`
+- **Type:** Standard
+- **Why:** **Message pagination** — the primary messages read path. Equality on `conversationId` (E),
+  descending sort on `sentAt` then `_id` (S) enables efficient cursor-based backward pagination.
+  The `_id` tiebreaker prevents sort instability when multiple messages share the same `sentAt`
+  millisecond. Covers the entire scrollback query.
 
 #### `message_attachments` collection
 
-| Index Name             | Fields                                 | Type     | Why                                                                                           |
-| ---------------------- | -------------------------------------- | -------- | --------------------------------------------------------------------------------------------- |
-| `att_msgId_1`          | `{ messageId: 1 }`                     | Standard | Fetch all attachments for a specific message.                                                 |
-| `att_convId_createdAt` | `{ conversationId: 1, createdAt: -1 }` | Standard | Fetch all attachments in a conversation, sorted by upload time (for "media gallery" feature). |
+##### `att_msgId_1`
+
+- **Fields:** `{ messageId: 1 }`
+- **Type:** Standard
+- **Why:** Fetch all attachments for a specific message.
+
+##### `att_convId_createdAt`
+
+- **Fields:** `{ conversationId: 1, createdAt: -1 }`
+- **Type:** Standard
+- **Why:** Fetch all attachments in a conversation sorted by upload time (for "media gallery" feature).
 
 #### `conversation_members` collection
 
-| Index Name                | Fields                                     | Type     | Why                                                                                                                                                                                                                                                                                                                                                                                                    |
-| ------------------------- | ------------------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `cm_userId_convId_unique` | `{ userId: 1, conversationId: 1 }`         | Unique   | **Upsert membership** — primary key of the relationship. Enforces one document per (user, conversation) pair. Used for both point lookups and updates. E on both fields.                                                                                                                                                                                                                               |
-| `cm_convId_1`             | `{ conversationId: 1 }`                    | Standard | Fetch all member records for a conversation (e.g., to compute total unread, to deliver read receipt events to other participants, or to list members for an admin view).                                                                                                                                                                                                                               |
-| `cm_userId_pinned`        | `{ userId: 1, pinned: -1, updatedAt: -1 }` | Standard | Sidebar with pinned conversations sorted to top, then sorted by recent activity within each pin group. ESR: E on `userId`, S on `pinned` (DESC → pinned=true first) then `updatedAt`. For the full sidebar query, this is step one — conversation-level recency (`conversations.updatedAt`) is resolved in step two by fetching the actual `conversations` documents and sorting those by `updatedAt`. |
+##### `cm_userId_convId_unique`
+
+- **Fields:** `{ userId: 1, conversationId: 1 }`
+- **Type:** Unique
+- **Why:** **Upsert membership** — primary key of the relationship. Enforces one document per
+  (user, conversation) pair. Used for both point lookups and updates. E on both fields.
+
+##### `cm_convId_1`
+
+- **Fields:** `{ conversationId: 1 }`
+- **Type:** Standard
+- **Why:** Fetch all member records for a conversation (e.g. to compute total unread, to deliver
+  read-receipt events to other participants, or to list members for an admin view).
+
+##### `cm_userId_pinned`
+
+- **Fields:** `{ userId: 1, pinned: -1, updatedAt: -1 }`
+- **Type:** Standard
+- **Why:** Sidebar with pinned conversations sorted to top, then by recent activity within each
+  pin group. ESR: E on `userId`, S on `pinned` (DESC → pinned=true first) then `updatedAt`.
+  For the full sidebar query this is step one — conversation-level recency
+  (`conversations.updatedAt`) is resolved in step two by fetching the actual `conversations`
+  documents and sorting those by `updatedAt`.
 
 #### `group_invites` collection
 
-| Index Name                       | Fields                                                                                          | Type                          | Why                                                                                                                                                                     |
-| -------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `gi_invitee_status`              | `{ inviteeId: 1, status: 1, , createdAt: -1 }`                                                  | Standard                      | **Pending invites for a user** — show incoming invitations on login or notification. E on `inviteeId`, E on `status` (values: `"pending"`, `"accepted"`, `"declined"`). |
-| `gi_conv_invitee_pending_unique` | `{ conversationId: 1, inviteeId: 1 }` with `{ partialFilterExpression: { status: "pending" } }` | Partial Unique                | **Prevent duplicate pending invites** — one active invite per (conversation, invitee) pair. Partial so accepted/declined invites don't block re-invitation.             |
-| `gi_expiresAt_ttl`               | `{ expiresAt: 1 }`                                                                              | TTL (`expireAfterSeconds: 0`) | Automatic purge of expired invites.                                                                                                                                     |
+##### `gi_invitee_status`
+
+- **Fields:** `{ inviteeId: 1, status: 1, createdAt: -1 }`
+- **Type:** Standard
+- **Why:** **Pending invites for a user** — show incoming invitations on login or notification.
+  E on `inviteeId`, E on `status` (values: `"pending"`, `"accepted"`, `"declined"`).
+
+##### `gi_conv_invitee_pending_unique`
+
+- **Fields:** `{ conversationId: 1, inviteeId: 1 }`
+  with `{ partialFilterExpression: { status: "pending" } }`
+- **Type:** Partial Unique
+- **Why:** **Prevent duplicate pending invites** — one active invite per (conversation, invitee)
+  pair. Partial so accepted/declined invites don't block re-invitation.
+
+##### `gi_expiresAt_ttl`
+
+- **Fields:** `{ expiresAt: 1 }`
+- **Type:** TTL (`expireAfterSeconds: 0`)
+- **Why:** Automatic purge of expired invites.
 
 #### `user_relationships` collection
 
-| Index Name            | Fields                                  | Type     | Why                                                                                                                                                                                  |
-| --------------------- | --------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `ur_from_to_unique`   | `{ fromUserId: 1, toUserId: 1 }`        | Unique   | **One document per directed pair.** Point lookup for "what is my relationship to user B?" and prevents duplicate relationships. E on both fields.                                    |
-| `ur_from_type_status` | `{ fromUserId: 1, type: 1, status: 1 }` | Standard | **Outgoing relationships** — "show my friends" (type="friend", status="accepted"), "show who I blocked" (type="blocked"). ESR: E on `fromUserId`, E on `type`, E on `status`.        |
-| `ur_to_type_status`   | `{ toUserId: 1, type: 1, status: 1 }`   | Standard | **Incoming relationships** — "show incoming friend requests" (type="friend", status="pending"), "who blocked me" (type="blocked"). ESR: E on `toUserId`, E on `type`, E on `status`. |
+##### `ur_from_to_unique`
+
+- **Fields:** `{ fromUserId: 1, toUserId: 1 }`
+- **Type:** Unique
+- **Why:** **One document per directed pair.** Point lookup for "what is my relationship to user B?"
+  and prevents duplicate relationships. E on both fields.
+
+##### `ur_from_type_status`
+
+- **Fields:** `{ fromUserId: 1, type: 1, status: 1 }`
+- **Type:** Standard
+- **Why:** **Outgoing relationships** — "show my friends" (type=`"friend"`, status=`"accepted"`),
+  "show who I blocked" (type=`"blocked"`). ESR: E on `fromUserId`, E on `type`, E on `status`.
+
+##### `ur_to_type_status`
+
+- **Fields:** `{ toUserId: 1, type: 1, status: 1 }`
+- **Type:** Standard
+- **Why:** **Incoming relationships** — "show incoming friend requests" (type=`"friend"`,
+  status=`"pending"`), "who blocked me" (type=`"blocked"`). ESR: E on `toUserId`, E on `type`,
+  E on `status`.
 
 ### 2.2 ESR Rule Summary
 
@@ -218,16 +271,3 @@ This is always an index range scan starting from `cursorSentAt`, regardless of h
 **Trade-off:** Cursor pagination does not support random-access page numbers ("jump to page 50"). For a chat application this is not needed — users scroll linearly or jump to a specific message via a search result (which provides an anchor `_id`/`sentAt` directly).
 
 ---
-
-### 3.3 Flat Messages Collection vs. Bucket Pattern
-
-**Decision:** Flat collection — one document per message.
-
-**Why:**  
-The bucket pattern (grouping N messages per document by time window) optimizes write throughput and reduces document count at the cost of query complexity. For this application's current scale it introduces unnecessary complexity:
-
-- Bucket queries require `$elemMatch` and array projection, making cursor pagination logic significantly harder to implement correctly.
-- Partial updates (edit, delete) within a bucket require positional array operators and careful concurrency handling.
-- Fetching a single message by `_id` for reply previews requires knowing which bucket it lives in.
-
-The flat collection with a `{ conversationId: 1, sentAt: -1 }` index handles millions of messages efficiently. MongoDB's b-tree range scans are fast; the bottleneck at scale is typically network I/O and application-layer serialization, not MongoDB scan performance on a well-indexed collection.

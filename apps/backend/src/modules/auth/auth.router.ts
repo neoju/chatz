@@ -4,14 +4,21 @@ import {
   LoginRequestSchema,
   RegisterRequestSchema,
   AuthResponseSchema,
+  ForgotPasswordRequestSchema,
+  ForgotPasswordResponseSchema,
+  ResetPasswordRequestSchema,
   type LoginRequest,
-  type RegisterRequest
+  type RegisterRequest,
+  type ForgotPasswordRequest,
+  type ResetPasswordRequest
 } from '@chatz/dto';
 
 import authService from './auth.service.js';
+import passwordResetService from './password-reset.service.js';
 
 export default function authRouter(app: FastifyInstance) {
   const service = authService(app);
+  const passwordReset = passwordResetService(app);
 
   app.post<{ Body: LoginRequest }>(
     '/login',
@@ -45,6 +52,46 @@ export default function authRouter(app: FastifyInstance) {
       const token = await service.register(req.body);
 
       res.code(201).send({ token });
+    }
+  );
+
+  app.post<{ Body: ForgotPasswordRequest }>(
+    '/forgot-password',
+    {
+      schema: {
+        body: ForgotPasswordRequestSchema,
+        response: { 200: ForgotPasswordResponseSchema }
+      },
+      config: {
+        rateLimit: { max: 5, timeWindow: '1 minute' }
+      }
+    },
+    async (_req, res) => {
+      await passwordReset.handleForgotPassword(_req.body.email);
+
+      return res
+        .code(200)
+        .send({ message: 'If your email is registered, you will receive a reset link' });
+    }
+  );
+
+  app.post<{ Body: ResetPasswordRequest }>(
+    '/reset-password',
+    {
+      schema: {
+        body: ResetPasswordRequestSchema,
+        response: { 204: {} }
+      }
+    },
+    async (req, res) => {
+      const { token, newPassword } = req.body;
+
+      const success = await passwordReset.resetPassword(token, newPassword);
+      if (!success) {
+        return res.code(400).send({ error: 'Invalid or expired reset token' });
+      }
+
+      return res.code(204).send();
     }
   );
 }

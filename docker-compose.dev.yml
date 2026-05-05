@@ -15,6 +15,13 @@ services:
     volumes:
       - redis_data_dev:/data
 
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - '1025:1025'
+      - '8025:8025'
+
   backend:
     image: node:22-alpine
     restart: unless-stopped
@@ -29,6 +36,18 @@ services:
       HOST: 0.0.0.0
       PORT: '3000'
       CI: 'true'
+      REDIS_URL: redis://redis:6379
+      FRONTEND_URL: http://localhost:5173
+      EMAIL_FROM_NAME: Chatz
+      EMAIL_FROM_ADDRESS: no-reply@chatz.example.com
+      SMTP_HOST: mailpit
+      SMTP_PORT: '1025'
+      SMTP_USER: ''
+      SMTP_PASS: ''
+      SMTP_SECURE: 'false'
+      PASSWORD_RESET_TTL_SECONDS: '900'
+      PASSWORD_RESET_RATE_LIMIT_PER_EMAIL: '3'
+      PASSWORD_RESET_RATE_LIMIT_WINDOW_SECONDS: '3600'
     ports:
       - '3000:3000'
     volumes:
@@ -38,6 +57,7 @@ services:
     depends_on:
       - mongo
       - redis
+      - mailpit
 
   frontend:
     image: node:22-alpine
