@@ -35,8 +35,10 @@ export function createEmailWorker(
         expiresInMinutes
       });
 
-      const html = await render(template);
-      const text = await render(template, { plainText: true });
+      const [html, text] = await Promise.all([
+        render(template),
+        render(template, { plainText: true })
+      ]);
 
       try {
         await sender.send({
@@ -46,11 +48,13 @@ export function createEmailWorker(
           html,
           text
         });
+
         app.log.info({ jobId: job.id, jobName: job.name, to: job.data.to }, 'Email job completed');
       } catch (error: unknown) {
         if (error instanceof SendError && !error.retriable) {
           throw new UnrecoverableError(error.message);
         }
+
         throw error;
       }
     },
@@ -84,8 +88,7 @@ export function createEmailWorker(
     dlq
       .add(job.name, {
         ...job.data,
-        originalJobName: job.name,
-        originalJobId: job.id,
+        originalJobId: job.id!,
         failedReason
       })
       .then((res) => {

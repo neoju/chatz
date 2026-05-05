@@ -10,7 +10,7 @@ import { RegisterRequest } from '@chatz/dto';
 export default (app: FastifyInstance) => ({
   generateToken(user: HydratedDocument<IUser>): string {
     const payload: JWTPayload = {
-      userId: user._id.toString(),
+      userId: user.id,
       email: user.email
     };
 

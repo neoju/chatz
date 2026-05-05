@@ -8,7 +8,14 @@ import { createEmailWorker } from './email.worker.js';
 import { createSmtpSender } from './smtp.sender.js';
 
 async function emailPlugin(app: FastifyInstance) {
-  const queue = createEmailQueue(app.redis);
+  app.log.info('Initializing email module');
+
+  const queue = createEmailQueue(
+    app.redis,
+    Number(app.config.EMAIL_QUEUE_ATTEMPTS),
+    Number(app.config.EMAIL_QUEUE_BACKOFF_DELAY)
+  );
+
   const sender = createSmtpSender({
     host: app.config.SMTP_HOST,
     port: Number(app.config.SMTP_PORT),
@@ -27,6 +34,8 @@ async function emailPlugin(app: FastifyInstance) {
     await worker.close();
     await queue.close();
   });
+
+  app.log.info('Email module initialized');
 }
 
 declare module 'fastify' {

@@ -12,19 +12,20 @@ export interface PasswordResetJobData {
 }
 
 export interface DlqJobData extends PasswordResetJobData {
-  originalJobName: string;
-  originalJobId?: string;
+  originalJobId: string;
   failedReason: string;
 }
 
 export function createEmailQueue(
-  redis: Redis
+  redis: Redis,
+  attempts: number,
+  backoffDelay: number
 ): Queue<PasswordResetJobData, void, typeof PASSWORD_RESET_JOB> {
   return new Queue<PasswordResetJobData, void, typeof PASSWORD_RESET_JOB>(EMAIL_QUEUE, {
     connection: redis,
     defaultJobOptions: {
-      attempts: 5,
-      backoff: { type: 'exponential', delay: 5000 }
+      attempts,
+      backoff: { type: 'exponential', delay: backoffDelay }
     }
   });
 }

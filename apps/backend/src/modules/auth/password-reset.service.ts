@@ -3,31 +3,17 @@ import bcrypt from 'bcrypt';
 import { randomBytes, createHash } from 'node:crypto';
 
 import { User } from '@/modules/user/user.schema.js';
-import type { ResetTokenData } from './password-reset.types.js';
 
-/**
- * Atomically invalidates all prior tokens for a user and sets a new one.
- * Eliminates the TOCTOU race between smembers + multi/exec.
- */
-const LUA_RESET_TOKEN = `
-local userSetKey = KEYS[1]
-local tokenKey = KEYS[2]
-local userId = ARGV[1]
-local tokenHash = ARGV[2]
-local ttl = tonumber(ARGV[3])
-
-local existingHashes = redis.call('SMEMBERS', userSetKey)
-for _, hash in ipairs(existingHashes) do
-  redis.call('DEL', 'pw_reset:' .. hash)
-end
-
-redis.call('SET', tokenKey, userId, 'EX', ttl)
-redis.call('DEL', userSetKey)
-redis.call('SADD', userSetKey, tokenHash)
-redis.call('EXPIRE', userSetKey, ttl)
-
-return 1
-`;
+interface ResetTokenData {
+  /** Raw 32-byte CSPRNG token — never logged or stored */
+  rawToken: Buffer;
+  /** SHA-256 hex hash — stored in Redis as `pw_reset:<hash>` */
+  tokenHash: string;
+  /** URL-safe base64 encoding for embedding in reset links */
+  tokenized: string;
+  username: string;
+  userId: string;
+}
 
 export default (app: FastifyInstance) => ({
   async createResetToken(email: string): Promise<ResetTokenData | null> {
@@ -37,22 +23,51 @@ export default (app: FastifyInstance) => ({
       return null;
     }
 
-    const userId = user._id.toString();
     const rawToken = randomBytes(32);
     const tokenHash = createHash('sha256').update(rawToken).digest('hex');
-    const tokenized = rawToken.toString('base64url');
-    const username = user.nickname;
 
-    const ttl = Number(app.config.PWDRS_TTL);
-    const userSetKey = `pw_reset:user:${userId}`;
+    const userSetKey = `pw_reset:user:${user.id}`;
     const tokenKey = `pw_reset:${tokenHash}`;
 
-    const NUM_KEYS = 2; // KEYS[1] = userSetKey, KEYS[2] = tokenKey
-    await app.redis.eval(LUA_RESET_TOKEN, NUM_KEYS, userSetKey, tokenKey, userId, tokenHash, String(ttl));
+    await app.redis.eval(
+      // Atomically invalidates all prior tokens for a user and sets a new one.
+      // Eliminates the TOCTOU race between smembers + multi/exec.
+      `
+      local userSetKey = KEYS[1]
+      local tokenKey = KEYS[2]
 
-    app.log.info({ tokenHash, userId }, 'Password reset token created');
+      local userId = ARGV[1]
+      local tokenHash = ARGV[2]
+      local ttl = tonumber(ARGV[3])
 
-    return { rawToken, tokenHash, tokenized, username, userId };
+      local existingHashes = redis.call('SMEMBERS', userSetKey)
+      for _, hash in ipairs(existingHashes) do
+        redis.call('DEL', 'pw_reset:' .. hash)
+      end
+
+      redis.call('SET', tokenKey, userId, 'EX', ttl)
+      redis.call('DEL', userSetKey)
+      redis.call('SADD', userSetKey, tokenHash)
+      redis.call('EXPIRE', userSetKey, ttl)
+
+      return 1
+      `,
+      // KEYS for the lua script: userSetKey, tokenKey
+      // 2 is the number of keys
+      // Redis expects we specify how many keys we're passing before the keys themselves
+      2, userSetKey, tokenKey,
+      // ARGV for the lua script: userId, tokenHash, TTL
+      user.id, tokenHash, app.config.PWDRS_TTL);
+
+    app.log.info({ tokenHash, userId: user.id }, 'Password reset token created');
+
+    return {
+      rawToken,
+      tokenHash,
+      tokenized: rawToken.toString('base64url'),
+      userId: user.id,
+      username: user.nickname,
+    };
   },
 
   async consumeToken(tokenized: string): Promise<string | null> {

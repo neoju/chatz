@@ -16,11 +16,11 @@ import userRouter from '@/modules/user/user.router.js';
 const server = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
 
 await configEnv(server);
+await server.register(redis);
 server.register(mongoose);
 server.register(providerZod);
-server.register(rateLimit, { max: 100, timeWindow: '1 minute' });
-server.register(redis);
 server.register(emailPlugin);
+server.register(rateLimit, { max: 100, timeWindow: '1 minute' });
 
 server.register(authRouter, { prefix: '/api' });
 server.register(
@@ -36,14 +36,8 @@ server.get('/health', () => {
   return { status: 'ok', timestamp: new Date().toISOString() };
 });
 
-const port = Number(server.config.PORT);
-const host = server.config.HOST;
-
 server
-  .listen({ port, host })
-  .then(() => {
-    server.log.info(`Backend listening on http://${host}:${port}`);
-  })
+  .listen({ port: Number(server.config.PORT), host: server.config.HOST })
   .catch((err) => {
     server.log.error(err);
     process.exit(1);

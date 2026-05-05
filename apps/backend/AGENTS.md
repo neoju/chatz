@@ -77,3 +77,8 @@ Service-level errors (`throw new Error('Bad request')`) are not currently mapped
 - Public: `POST /api/login`, `POST /api/register`, `POST /api/forgot-password` (stub), `GET /health`.
 - Protected (Bearer JWT): `GET /api/users/me`.
 - OpenAPI: `/api/docs` (Swagger UI), generated from Zod schemas via `fastify-type-provider-zod`.
+
+
+## Coding rules
+
+- Use Model.id instead of `_id.toString()` to get the string version of _id

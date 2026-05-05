@@ -120,7 +120,7 @@ describe('createResetToken', () => {
 
   it('returns ResetTokenData when user exists', async () => {
     mockFindOne.mockResolvedValue({
-      _id: { toString: () => USER_ID },
+      id: USER_ID,
       nickname: USER_NICKNAME
     });
     const app = makeMockApp();
@@ -138,7 +138,7 @@ describe('createResetToken', () => {
 
   it('invalidates prior tokens for the same user atomically via Lua script', async () => {
     mockFindOne.mockResolvedValue({
-      _id: { toString: () => USER_ID },
+      id: USER_ID,
       nickname: USER_NICKNAME
     });
 
@@ -161,7 +161,7 @@ describe('createResetToken', () => {
 
   it('does not log the raw token', async () => {
     mockFindOne.mockResolvedValue({
-      _id: { toString: () => USER_ID },
+      id: USER_ID,
       nickname: USER_NICKNAME
     });
     const app = makeMockApp();
@@ -288,7 +288,7 @@ describe('checkEmailRateLimit', () => {
 describe('handleForgotPassword', () => {
   it('sends email when user exists and rate limit allows', async () => {
     mockFindOne.mockResolvedValue({
-      _id: { toString: () => USER_ID },
+      id: USER_ID,
       nickname: USER_NICKNAME
     });
     const app = makeMockApp();

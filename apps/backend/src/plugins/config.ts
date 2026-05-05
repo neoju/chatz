@@ -18,12 +18,13 @@ declare module 'fastify' {
       SMTP_PASS: string;
       SMTP_SECURE: string;
 
-      /**
-       * PWDRS_ prefix stands for "Password Reset"
-       */
+      // PWDRS_ prefix stands for "Password Reset"
       PWDRS_TTL: string;
       PWDRS_RATE_LIMIT_PER_EMAIL: string;
       PWDRS_RATE_LIMIT_COOLDOWN_SEC: string;
+
+      EMAIL_QUEUE_ATTEMPTS: string;
+      EMAIL_QUEUE_BACKOFF_DELAY: string;
     };
   }
 }
@@ -56,7 +57,9 @@ const schema = {
     SMTP_SECURE: { type: 'string', default: 'false' },
     PWDRS_TTL: { type: 'string', default: '900' },
     PWDRS_RATE_LIMIT_PER_EMAIL: { type: 'string', default: '3' },
-    PWDRS_RATE_LIMIT_COOLDOWN_SEC: { type: 'string', default: '3600' }
+    PWDRS_RATE_LIMIT_COOLDOWN_SEC: { type: 'string', default: '3600' },
+    EMAIL_QUEUE_ATTEMPTS: { type: 'string', default: '5' },
+    EMAIL_QUEUE_BACKOFF_DELAY: { type: 'string', default: '5000' }
   }
 };
 

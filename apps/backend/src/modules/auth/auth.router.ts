@@ -77,7 +77,6 @@ export default function authRouter(app: FastifyInstance) {
     {
       schema: {
         body: ResetPasswordRequestSchema,
-        response: { 204: {} }
       }
     },
     async (req, res) => {
