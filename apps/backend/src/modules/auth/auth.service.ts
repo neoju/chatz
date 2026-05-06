@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 import { User, type IUser } from '@/modules/user/user.schema.js';
 import { JWTPayload } from '@/shared/types.js';
 import { RegisterRequest } from '@chatz/dto';
+import { UnauthorizedException, ConflictException } from '@/shared/errors.js';
 
 export default (app: FastifyInstance) => ({
   generateToken(user: HydratedDocument<IUser>): string {
@@ -21,12 +22,12 @@ export default (app: FastifyInstance) => ({
     const user = await User.findOne({ email });
 
     if (!user) {
-      throw new Error('Bad request');
+      throw new UnauthorizedException('Invalid email or password');
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new Error('Bad request');
+      throw new UnauthorizedException('Invalid email or password');
     }
 
     return this.generateToken(user);
@@ -37,7 +38,7 @@ export default (app: FastifyInstance) => ({
     const user = await User.findOne({ email });
 
     if (user) {
-      throw new Error('User already exists');
+      throw new ConflictException('Email already registered');
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);

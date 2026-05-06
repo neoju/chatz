@@ -82,10 +82,7 @@ export default function authRouter(app: FastifyInstance) {
     async (req, res) => {
       const { token, newPassword } = req.body;
 
-      const success = await passwordReset.resetPassword(token, newPassword);
-      if (!success) {
-        return res.code(400).send({ error: 'Invalid or expired reset token' });
-      }
+      await passwordReset.resetPassword(token, newPassword);
 
       return res.code(204).send();
     }

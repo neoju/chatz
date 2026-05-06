@@ -1,14 +1,15 @@
 import { User } from './user.schema.js';
+import { NotFoundException, UnauthorizedException } from '@/shared/errors.js';
 
 export async function getUserProfile(userId: string) {
   if (!userId) {
-    return null;
+    throw new UnauthorizedException('User not authenticated');
   }
 
   const user = await User.findById(userId).exec();
 
   if (!user) {
-    throw new Error('User not found');
+    throw new NotFoundException('User not found');
   }
 
   return {

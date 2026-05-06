@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
+import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 
 import configEnv from '@/plugins/config.js';
@@ -7,6 +8,7 @@ import mongoose from '@/plugins/mongoose.js';
 import providerZod from '@/plugins/provider-zod.js';
 import redis from '@/plugins/redis.js';
 import emailPlugin from '@/modules/email/email.plugin.js';
+import errorHandler from '@/plugins/error-handler.js';
 
 import authMiddleware from '@/middlewares/auth.js';
 
@@ -16,11 +18,16 @@ import userRouter from '@/modules/user/user.router.js';
 const server = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
 
 await configEnv(server);
+await server.register(cors, {
+  origin: true,
+  credentials: true
+});
 await server.register(redis);
 server.register(mongoose);
 server.register(providerZod);
 server.register(emailPlugin);
 server.register(rateLimit, { max: 100, timeWindow: '1 minute' });
+server.register(errorHandler);
 
 server.register(authRouter, { prefix: '/api' });
 server.register(

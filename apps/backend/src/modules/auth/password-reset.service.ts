@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import { randomBytes, createHash } from 'node:crypto';
 
 import { User } from '@/modules/user/user.schema.js';
+import { BadRequestException } from '@/shared/errors.js';
 
 interface ResetTokenData {
   /** Raw 32-byte CSPRNG token — never logged or stored */
@@ -119,15 +120,13 @@ export default (app: FastifyInstance) => ({
     }
   },
 
-  async resetPassword(token: string, newPassword: string): Promise<boolean> {
+  async resetPassword(token: string, newPassword: string): Promise<void> {
     const userId = await this.consumeToken(token);
     if (!userId) {
-      return false;
+      throw new BadRequestException('Invalid or expired reset token');
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await User.updateOne({ _id: userId }, { password: hashedPassword });
-
-    return true;
   }
 });
