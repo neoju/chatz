@@ -9,7 +9,7 @@ export async function getUserProfile(userId: string) {
   const user = await User.findById(userId).exec();
 
   if (!user) {
-    throw new NotFoundException('User not found');
+    throw new UnauthorizedException('Bad credentials');
   }
 
   return {

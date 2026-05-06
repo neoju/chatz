@@ -1,0 +1,228 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1778054538581,
+  "projectRoot": "/home/neo/Dev/me/chatz",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": ">=22",
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "C/C++",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "Makefile"
+        ]
+      }
+    ],
+    "frameworks": [],
+    "packageManager": "pnpm",
+    "runtime": "Node.js 22"
+  },
+  "build": {
+    "buildCommand": "pnpm build",
+    "testCommand": "make test",
+    "lintCommand": "pnpm lint",
+    "devCommand": "pnpm dev",
+    "scripts": {
+      "build": "turbo run build",
+      "dev": "turbo run dev",
+      "lint": "turbo run lint",
+      "format": "prettier --write .",
+      "format:check": "prettier --check .",
+      "check-types": "turbo run check-types"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": true,
+    "workspaces": [],
+    "mainDirectories": [
+      "docs"
+    ],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "apps": {
+      "path": "apps",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1778054538576,
+      "keyFiles": []
+    },
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 3,
+      "lastAccessed": 1778054538576,
+      "keyFiles": [
+        "database-schema.md",
+        "development-roadmap.md",
+        "forgot-password-design.md"
+      ]
+    },
+    "packages": {
+      "path": "packages",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1778054538579,
+      "keyFiles": []
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "apps/frontend/src/routes/(app)/+layout.svelte",
+      "accessCount": 3,
+      "lastAccessed": 1778059846781,
+      "type": "file"
+    },
+    {
+      "path": "apps/frontend/src/routes/(app)/+page.svelte",
+      "accessCount": 3,
+      "lastAccessed": 1778060182349,
+      "type": "file"
+    },
+    {
+      "path": "apps/frontend/src/lib/api/user.ts",
+      "accessCount": 2,
+      "lastAccessed": 1778054910513,
+      "type": "file"
+    },
+    {
+      "path": "apps/frontend/src/lib/components/layout/index.ts",
+      "accessCount": 2,
+      "lastAccessed": 1778060176822,
+      "type": "file"
+    },
+    {
+      "path": "apps/backend/src/modules/auth/auth.router.ts",
+      "accessCount": 1,
+      "lastAccessed": 1778054858795,
+      "type": "file"
+    },
+    {
+      "path": "apps/backend/src/plugins/error-handler.ts",
+      "accessCount": 1,
+      "lastAccessed": 1778054859694,
+      "type": "file"
+    },
+    {
+      "path": "apps/backend/src/modules/user/user.router.ts",
+      "accessCount": 1,
+      "lastAccessed": 1778054864706,
+      "type": "file"
+    },
+    {
+      "path": "packages/dto/src/auth.ts",
+      "accessCount": 1,
+      "lastAccessed": 1778054868003,
+      "type": "file"
+    },
+    {
+      "path": "packages/dto/src/password-reset.ts",
+      "accessCount": 1,
+      "lastAccessed": 1778054868345,
+      "type": "file"
+    },
+    {
+      "path": "apps/frontend/src/lib/api.ts",
+      "accessCount": 1,
+      "lastAccessed": 1778054890522,
+      "type": "file"
+    },
+    {
+      "path": "apps/frontend/src/lib/api/auth.ts",
+      "accessCount": 1,
+      "lastAccessed": 1778054895369,
+      "type": "file"
+    },
+    {
+      "path": "packages/shared/src/user.ts",
+      "accessCount": 1,
+      "lastAccessed": 1778054900780,
+      "type": "file"
+    },
+    {
+      "path": "packages/shared/src/index.ts",
+      "accessCount": 1,
+      "lastAccessed": 1778054904026,
+      "type": "file"
+    },
+    {
+      "path": "apps/frontend/src/lib/api/api-client.ts",
+      "accessCount": 1,
+      "lastAccessed": 1778056252390,
+      "type": "file"
+    },
+    {
+      "path": "apps/frontend/src/routes/+layout.ts",
+      "accessCount": 1,
+      "lastAccessed": 1778056252414,
+      "type": "file"
+    },
+    {
+      "path": "apps/frontend/src/lib/stores/auth.ts",
+      "accessCount": 1,
+      "lastAccessed": 1778056266340,
+      "type": "file"
+    },
+    {
+      "path": "apps/frontend/src/routes/+layout.svelte",
+      "accessCount": 1,
+      "lastAccessed": 1778056612205,
+      "type": "file"
+    },
+    {
+      "path": "apps/frontend/src/routes/+page.svelte",
+      "accessCount": 1,
+      "lastAccessed": 1778056612445,
+      "type": "file"
+    },
+    {
+      "path": "apps/frontend/src/routes/layout.css",
+      "accessCount": 1,
+      "lastAccessed": 1778056651451,
+      "type": "file"
+    },
+    {
+      "path": "apps/frontend/src/lib/components/layout/ChatLayout.svelte",
+      "accessCount": 1,
+      "lastAccessed": 1778059760234,
+      "type": "file"
+    },
+    {
+      "path": "apps/frontend/src/lib/components/layout/Sidebar.svelte",
+      "accessCount": 1,
+      "lastAccessed": 1778060168134,
+      "type": "file"
+    },
+    {
+      "path": "apps/frontend/src/lib/components/layout/ChatContainer.svelte",
+      "accessCount": 1,
+      "lastAccessed": 1778060172208,
+      "type": "file"
+    },
+    {
+      "path": "apps/frontend/src/lib/components/layout/ChatDetail.svelte",
+      "accessCount": 1,
+      "lastAccessed": 1778060172643,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}
