@@ -74,6 +74,9 @@ importers:
       nodemailer:
         specifier: ^8.0.7
         version: 8.0.7
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
     devDependencies:
       '@chatz/eslint-config':
         specifier: workspace:*
@@ -190,6 +193,9 @@ importers:
 
   packages/dto:
     dependencies:
+      '@chatz/shared':
+        specifier: workspace:*
+        version: link:../shared
       zod:
         specifier: ^4.4.0
         version: 4.4.3

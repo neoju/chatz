@@ -1,0 +1,10 @@
+project_id = "your-gcp-project-id"
+
+# Optional once DNS points at app_static_ip.
+# domain_name = "chat.example.com"
+
+# Required for browser direct uploads/downloads with signed Cloud Storage URLs.
+# attachment_cors_origins = ["https://chat.example.com"]
+
+# Optional: delete attachments automatically after N days. 0 means retain.
+# attachment_retention_days = 0

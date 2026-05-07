@@ -143,12 +143,12 @@
   @reference "../../../routes/layout.css";
 
   .sidebar-header {
-    @apply p-4 pb-2 transition-all duration-200;
+    @apply p-4 pb-2 transition-[padding,margin] duration-200;
     @apply group-data-[collapsible=icon]:p-0;
   }
 
   .filter-container {
-    @apply mt-4 flex gap-1 rounded-xl bg-gray-50/80 p-1 transition-all duration-200;
+    @apply mt-4 flex gap-1 rounded-xl bg-gray-50/80 p-1 transition-[padding,margin,background-color] duration-200;
     @apply group-data-[collapsible=icon]:hidden;
   }
 

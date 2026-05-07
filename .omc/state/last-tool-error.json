@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"cat /home/neo/Dev/me/chatz/apps/frontend/.playwright-mcp/console-2026-05-06T09-29-59-812Z.log\",\"description\":\"Check console errors\"}",
-  "error": "Exit code 1\ncat: /home/neo/Dev/me/chatz/apps/frontend/.playwright-mcp/console-2026-05-06T09-29-59-812Z.log: No such file or directory",
-  "timestamp": "2026-05-06T09:30:04.134Z",
-  "retry_count": 1
-}

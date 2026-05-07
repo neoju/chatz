@@ -1,5 +1,5 @@
 import { User } from './user.schema.js';
-import { NotFoundException, UnauthorizedException } from '@/shared/errors.js';
+import { UnauthorizedException } from '@/shared/errors.js';
 
 export async function getUserProfile(userId: string) {
   if (!userId) {

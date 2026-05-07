@@ -45,6 +45,15 @@ async function errorHandlerPlugin(fastify: FastifyInstance) {
       });
     }
 
+    // MongoDB duplicate key error
+    if (error instanceof Error && 'code' in error && error.code === 11000) {
+      return reply.status(409).send({
+        statusCode: 409,
+        error: 'Conflict',
+        message: 'A duplicate resource already exists'
+      });
+    }
+
     if (error instanceof Error) {
       return reply.status(500).send({
         statusCode: 500,

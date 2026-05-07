@@ -12,7 +12,7 @@
   const { sidebar, chat, detail, showDetail = false }: Props = $props();
 </script>
 
-<SidebarProvider style="--sidebar-width: 340px; --sidebar-width-icon: 60px;">
+<SidebarProvider style="--sidebar-width: 340px;">
   {@render sidebar()}
   <SidebarInset>
     <div class="chat-layout">

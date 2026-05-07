@@ -17,6 +17,7 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "@chatz/shared": "workspace:*",
     "zod": "^4.4.0"
   },
   "devDependencies": {

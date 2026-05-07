@@ -85,6 +85,15 @@ export class ConflictException extends HttpException {
 }
 
 /**
+ * 410 Gone - The requested resource is no longer available
+ */
+export class GoneException extends HttpException {
+  constructor(message?: string | Record<string, unknown>) {
+    super(message ?? 'Gone', 410);
+  }
+}
+
+/**
  * 422 Unprocessable Entity - Semantic errors in the request
  */
 export class UnprocessableEntityException extends HttpException {

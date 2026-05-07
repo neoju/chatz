@@ -11,9 +11,11 @@ import emailPlugin from '@/modules/email/email.plugin.js';
 import errorHandler from '@/plugins/error-handler.js';
 
 import authMiddleware from '@/middlewares/auth.js';
+import requireConversationMember from '@/middlewares/conversation-member.js';
 
 import authRouter from '@/modules/auth/auth.router.js';
 import userRouter from '@/modules/user/user.router.js';
+import conversationRouter from '@/modules/conversation/conversation.router.js';
 
 const server = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
 
@@ -35,6 +37,14 @@ server.register(
     await app.register(authMiddleware);
 
     app.register(userRouter, { prefix: '/users' });
+
+    app.register(
+      async function (convApp) {
+        await convApp.register(requireConversationMember);
+        convApp.register(conversationRouter, { prefix: '/v1' });
+      },
+      { prefix: '/v1' }
+    );
   },
   { prefix: '/api' }
 );
