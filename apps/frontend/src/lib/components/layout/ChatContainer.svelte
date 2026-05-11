@@ -4,7 +4,11 @@
   import MessageList from "$lib/components/chat/MessageList.svelte";
   import ChatInput from "$lib/components/chat/ChatInput.svelte";
   import { Button } from "$lib/components/ui/button";
-  import { Info } from "@lucide/svelte";
+  import { Info, MessageSquare, Loader2 } from "@lucide/svelte";
+  import { chatStore } from "$lib/stores/chat.svelte";
+  import { messageApi } from "$lib/api/message";
+  import { auth } from "$lib/stores/auth";
+  import { get } from "svelte/store";
 
   interface Props {
     toggleDetail?: () => void;
@@ -12,22 +16,100 @@
 
   const { toggleDetail }: Props = $props();
 
-  let messages: ChatMessage[] = $state([]);
+  let messages = $state<ChatMessage[]>([]);
+  let nextCursor = $state<string | null>(null);
+  let hasMore = $state(false);
+  let loading = $state(false);
+  let loadingMore = $state(false);
+
+  async function loadMessages(conversationId: string, cursor?: string) {
+    if (cursor) {
+      loadingMore = true;
+    } else {
+      loading = true;
+      messages = [];
+    }
+
+    try {
+      const response = await messageApi.getMessages({
+        conversationId,
+        cursor,
+        limit: 20
+      });
+
+      const user = get(auth).user;
+      const newMessages: ChatMessage[] = response.items.map(m => ({
+        id: m.id,
+        content: m.content,
+        role: m.sender.id === user?.id ? 'user' : 'assistant',
+        sender: {
+          id: m.sender.id,
+          name: m.sender.name,
+          avatarUrl: m.sender.avatarUrl
+        },
+        createdAt: new Date(m.sentAt)
+      }));
+
+      if (cursor) {
+        messages = [...newMessages, ...messages];
+      } else {
+        messages = newMessages;
+      }
+
+      nextCursor = response.nextCursor;
+      hasMore = response.hasMore;
+    } catch (err) {
+      console.error("Failed to load messages:", err);
+    } finally {
+      loading = false;
+      loadingMore = false;
+    }
+  }
+
+  $effect(() => {
+    if (chatStore.activeConversationId) {
+      loadMessages(chatStore.activeConversationId);
+    } else {
+      messages = [];
+      nextCursor = null;
+      hasMore = false;
+    }
+  });
+
+  function handleLoadMore() {
+    if (chatStore.activeConversationId && nextCursor && hasMore && !loadingMore) {
+      loadMessages(chatStore.activeConversationId, nextCursor);
+    }
+  }
 
   function handleSend(content: string) {
+    const user = get(auth).user;
+    if (!user) return;
+
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
       content,
       role: 'user',
+      sender: {
+        id: user.id,
+        name: user.nickname,
+        avatarUrl: user.avatarUrl ?? null
+      },
       createdAt: new Date()
     };
     messages = [...messages, userMsg];
 
+    // TODO: Integrate with backend sendMessage API
     setTimeout(() => {
       const botMsg: ChatMessage = {
         id: crypto.randomUUID(),
         content: `I received your message: "${content}"\nThis is a mock response.`,
         role: 'assistant',
+        sender: {
+          id: 'bot',
+          name: 'Chat Bot',
+          avatarUrl: null
+        },
         createdAt: new Date()
       };
       messages = [...messages, botMsg];
@@ -36,25 +118,46 @@
 </script>
 
 <div class="chat-container bg-background">
-  <header class="chat-header">
-    <div class="mobile-trigger">
-      <SidebarTrigger />
+  {#if !chatStore.activeConversationId}
+    <div class="flex flex-1 flex-col items-center justify-center p-8 text-center">
+      <div class="mb-4 rounded-full bg-muted p-6">
+        <MessageSquare class="h-12 w-12 text-muted-foreground" />
+      </div>
+      <h3 class="text-xl font-semibold">Welcome to Chatz</h3>
+      <p class="mt-2 text-muted-foreground">Select a conversation from the sidebar to start chatting.</p>
     </div>
-    <div class="chat-info">
-      <h2 class="text-sm font-semibold">Chat Name</h2>
-      <p class="text-xs text-muted-foreground">Online</p>
+  {:else}
+    <header class="chat-header">
+      <div class="mobile-trigger">
+        <SidebarTrigger />
+      </div>
+      <div class="chat-info">
+        <h2 class="text-sm font-semibold">Conversation</h2>
+        <p class="text-xs text-muted-foreground">Active</p>
+      </div>
+      <div class="header-actions">
+        <Button variant="ghost" size="icon" onclick={toggleDetail}>
+          <Info class="h-5 w-5" />
+        </Button>
+      </div>
+    </header>
+    
+    <div class="chat-content border-t">
+      {#if loading}
+        <div class="flex flex-1 items-center justify-center">
+          <Loader2 class="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      {:else}
+        <MessageList 
+          {messages} 
+          onLoadMore={handleLoadMore} 
+          {loadingMore} 
+          {hasMore} 
+        />
+      {/if}
+      <ChatInput onSend={handleSend} />
     </div>
-    <div class="header-actions">
-      <Button variant="ghost" size="icon" onclick={toggleDetail}>
-        <Info class="h-5 w-5" />
-      </Button>
-    </div>
-  </header>
-  
-  <div class="chat-content border-t">
-    <MessageList {messages} />
-    <ChatInput onSend={handleSend} />
-  </div>
+  {/if}
 </div>
 
 <style>

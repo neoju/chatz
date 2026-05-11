@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { ArrowUp, Loader2 } from '@lucide/svelte';
   import { conversationApi } from '$lib/api/conversation';
+  import { chatStore } from '$lib/stores/chat.svelte';
   import type { ListConversationsResponse } from '@chatz/dto';
   import { ConversationType } from '@chatz/shared';
   import ConversationItem from './ConversationItem.svelte';
@@ -21,6 +22,10 @@
   let error = $state<string | null>(null);
   let showGoTop = $state(false);
   let listContainer: HTMLDivElement | undefined = $state();
+
+  function selectConversation(id: string) {
+    chatStore.activeConversationId = id;
+  }
 
   function formatTimestamp(isoString: string): string {
     const date = new Date(isoString);
@@ -146,6 +151,8 @@
                 <ConversationItem
                   conversation={conv}
                   timestamp={formatTimestamp(conv.lastActivityAt)}
+                  isActive={chatStore.activeConversationId === conv.id}
+                  onclick={() => selectConversation(conv.id)}
                 />
               </Tooltip.Trigger>
               <Tooltip.Content side="right" align="center" class="group-data-[collapsible=icon]:block hidden">

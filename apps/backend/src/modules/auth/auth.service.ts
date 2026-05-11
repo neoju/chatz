@@ -3,7 +3,7 @@ import { HydratedDocument } from 'mongoose';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-import { User, type IUser } from '@/modules/user/user.schema.js';
+import { User, type IUser } from '@/shared/schemas/user.schema.js';
 import { JWTPayload } from '@/shared/types.js';
 import { RegisterRequest } from '@chatz/dto';
 import { UnauthorizedException, ConflictException } from '@/shared/errors.js';

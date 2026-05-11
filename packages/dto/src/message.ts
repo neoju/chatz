@@ -24,7 +24,11 @@ export const MessageResponseSchema = z
   .object({
     id: z.string().describe('Message ID'),
     conversationId: z.string().describe('Conversation ID'),
-    senderId: z.string().describe('Sender user ID'),
+    sender: z.object({
+      id: z.string().describe('Sender ID'),
+      name: z.string().describe('Sender nickname'),
+      avatarUrl: z.string().nullable().describe('Sender avatar URL')
+    }).describe('Sender information'),
     content: z.string().describe('Message content'),
     contentType: z.enum([MessageContentType.TEXT, MessageContentType.IMAGE, MessageContentType.FILE]).describe('Content type'),
     replyTo: z.object({

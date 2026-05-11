@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify';
 import bcrypt from 'bcrypt';
 import { randomBytes, createHash } from 'node:crypto';
 
-import { User } from '@/modules/user/user.schema.js';
+import { User } from '@/shared/schemas/user.schema.js';
 import { BadRequestException } from '@/shared/errors.js';
 
 interface ResetTokenData {

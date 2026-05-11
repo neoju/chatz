@@ -4,7 +4,7 @@ import type { Mock } from 'vitest';
 
 import makePasswordResetService from '@/modules/auth/password-reset.service.js';
 
-vi.mock('@/modules/user/user.schema.js', () => ({
+vi.mock('@/shared/schemas/user.schema.js', () => ({
   User: {
     findOne: vi.fn(),
     updateOne: vi.fn()
@@ -22,7 +22,7 @@ vi.mock('node:crypto', () => ({
   createHash: vi.fn()
 }));
 
-import { User } from '@/modules/user/user.schema.js';
+import { User } from '@/shared/schemas/user.schema.js';
 import bcrypt from 'bcrypt';
 import { randomBytes, createHash } from 'node:crypto';
 

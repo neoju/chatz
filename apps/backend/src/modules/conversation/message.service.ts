@@ -5,6 +5,7 @@ import { SendMessageRequest, EditMessageRequest, MessageResponse } from '@chatz/
 
 import { DEFAULT_PAGE_LIMIT } from '@/shared/constants.js';
 
+import { User } from '@/shared/schemas/user.schema.js';
 import { Message, IMessage } from './message.schema.js';
 import { MessageAttachment } from './message-attachment.schema.js';
 import { ConversationMember } from './conversation-member.schema.js';
@@ -36,17 +37,27 @@ export default function messageService(app: FastifyInstance) {
       }
     }
 
-    const attachments = await MessageAttachment.find({ messageId: message.id }).lean();
+    const [sender, attachments, readBy] = await Promise.all([
+      User.findById(message.senderId).lean(),
+      MessageAttachment.find({ messageId: message.id }).lean(),
+      ConversationMember.countDocuments({
+        conversationId,
+        lastReadAt: { $gte: message.sentAt }
+      })
+    ]);
 
-    const readBy = await ConversationMember.countDocuments({
-      conversationId,
-      lastReadAt: { $gte: message.sentAt }
-    });
+    if (!sender) {
+      throw new Error(`Sender not found for message ${message.id}`);
+    }
 
     return {
       id: message.id,
       conversationId: message.conversationId.toString(),
-      senderId: message.senderId.toString(),
+      sender: {
+        id: sender._id.toString(),
+        name: sender.nickname,
+        avatarUrl: sender.avatarUrl ?? null
+      },
       content: message.deletedAt ? 'This message was deleted' : message.content,
       contentType: message.contentType,
       replyTo,
@@ -108,9 +119,10 @@ export default function messageService(app: FastifyInstance) {
           updatedAt: new Date(),
           lastActivityAt: new Date(),
           lastMessage: {
-            content: params.content,
+            content: (params.contentType ?? MessageContentType.TEXT) === MessageContentType.IMAGE ? 'Sent an image' : params.content,
             senderId: new mongoose.Types.ObjectId(userId),
-            sentAt: new Date()
+            sentAt: new Date(),
+            contentType: params.contentType ?? MessageContentType.TEXT
           }
         }).session(session);
 
@@ -185,7 +197,7 @@ export default function messageService(app: FastifyInstance) {
       );
 
       return {
-        items: results,
+        items: results.reverse(),
         nextCursor,
         hasMore
       };

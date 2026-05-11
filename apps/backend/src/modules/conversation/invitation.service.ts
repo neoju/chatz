@@ -6,7 +6,7 @@ import { CreateInviteRequest, InviteResponse } from '@chatz/dto';
 import { GroupInvite, IGroupInvite } from './group-invite.schema.js';
 import { ConversationMember } from './conversation-member.schema.js';
 import { Conversation } from './conversation.schema.js';
-import { User } from '@/modules/user/user.schema.js';
+import { User } from '@/shared/schemas/user.schema.js';
 import {
   BadRequestException,
   ForbiddenException,

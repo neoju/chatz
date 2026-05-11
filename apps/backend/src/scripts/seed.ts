@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
-import { User } from '@/modules/user/user.schema.js';
+import { User } from '@/shared/schemas/user.schema.js';
 import { Conversation } from '@/modules/conversation/conversation.schema.js';
 import { ConversationMember } from '@/modules/conversation/conversation-member.schema.js';
 import { Message } from '@/modules/conversation/message.schema.js';
@@ -146,9 +146,9 @@ async function seed() {
 
 async function seedMessages(conversationId: mongoose.Types.ObjectId, participantIds: mongoose.Types.ObjectId[], mainUserId: mongoose.Types.ObjectId) {
   const now = new Date();
-  const startDate = new Date('2020-03-01T00:00:00.000Z');
+  const startDate = new Date('2026-03-01T00:00:00.000Z');
 
-  const messageCount = Math.floor(Math.random() * 50) + 50; // 50 to 100 messages per conversation
+  const messageCount = Math.floor(Math.random() * 20) + 10; // 10 to 30 messages per conversation for better density
   const messages: any[] = [];
 
   for (let i = 0; i < messageCount; i++) {
@@ -214,12 +214,13 @@ async function seedMessages(conversationId: mongoose.Types.ObjectId, participant
       updatedAt: latestMessage.sentAt,
       lastActivityAt: latestMessage.sentAt,
       lastMessage: {
-        content: latestMessage.content,
+        content: latestMessage.contentType === MessageContentType.IMAGE ? 'Sent an image' : latestMessage.content,
         senderId: latestMessage.senderId,
-        sentAt: latestMessage.sentAt
+        sentAt: latestMessage.sentAt,
+        contentType: latestMessage.contentType
       }
     });
-    // Also update all members' updatedAt to keep things consistent if needed
+    // Also update all members' updatedAt to keep things consistent
     await ConversationMember.updateMany({ conversationId }, { updatedAt: latestMessage.sentAt });
   }
 }

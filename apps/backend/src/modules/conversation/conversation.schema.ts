@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { ConversationType } from '@chatz/shared';
+import { ConversationType, MessageContentType } from '@chatz/shared';
 
 export interface IConversation {
   type: ConversationType;
@@ -8,6 +8,7 @@ export interface IConversation {
     content: string;
     senderId?: mongoose.Types.ObjectId;
     sentAt: Date;
+    contentType: MessageContentType;
   };
   lastActivityAt: Date;
   deletedAt?: Date;
@@ -27,7 +28,8 @@ const conversationSchema = new mongoose.Schema<IConversation>(
     lastMessage: {
       content: { type: String },
       senderId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-      sentAt: { type: Date }
+      sentAt: { type: Date },
+      contentType: { type: String, enum: Object.values(MessageContentType) }
     },
     lastActivityAt: { type: Date, default: Date.now },
     deletedAt: { type: Date, default: null }

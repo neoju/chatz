@@ -3,7 +3,7 @@
   import { Button } from "$lib/components/ui/button";
   import { ScrollArea } from "$lib/components/ui/scroll-area";
   import * as Accordion from "$lib/components/ui/accordion";
-  import { Bell, BellOff, PinOff, Users, ChevronDown, File, Link, Play } from "lucide-svelte";
+  import { Bell, PinOff, Users, Link, Play } from "@lucide/svelte";
   import { IsMobile } from "$lib/hooks/is-mobile.svelte.js";
   import * as Sheet from "$lib/components/ui/sheet/index.js";
 

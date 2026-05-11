@@ -1,4 +1,4 @@
-import { User } from './user.schema.js';
+import { User } from '@/shared/schemas/user.schema.js';
 import { UnauthorizedException } from '@/shared/errors.js';
 
 export async function getUserProfile(userId: string) {

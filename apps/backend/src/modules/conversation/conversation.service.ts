@@ -9,7 +9,7 @@ import { BadRequestException, ForbiddenException, NotFoundException } from '@/sh
 
 import { Conversation, IConversation } from './conversation.schema.js';
 import { ConversationMember } from './conversation-member.schema.js';
-import { User } from '@/modules/user/user.schema.js';
+import { User } from '@/shared/schemas/user.schema.js';
 import { encodeCursor, decodeCursor } from './cursor.utils.js';
 
 export default function conversationService(_app: FastifyInstance) {

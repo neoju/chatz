@@ -14,6 +14,7 @@
     isDelivered?: boolean;
     isActive?: boolean;
     isTyping?: boolean;
+    onclick?: (e: MouseEvent) => void;
   }
 
   const {
@@ -25,6 +26,7 @@
     isDelivered = false,
     isActive = false,
     isTyping = false,
+    onclick,
   }: Props = $props();
 
   const isDM = $derived(conversation.type === ConversationType.DM);
@@ -43,6 +45,7 @@
     isActive && "is-active",
     hasUnread && "has-unread"
   )}
+  {onclick}
 >
   <div class="relative flex-shrink-0">
     <Avatar.Root class="avatar transition-all">
