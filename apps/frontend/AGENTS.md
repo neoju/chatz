@@ -8,7 +8,8 @@
 - Never use deprecated features and functions
 - Use zod and packages/dto for validation
 - Create custom validate error text below input, never use input auto-complete
-- Use this cred for testing purpose: n@n.com / 123123
+- Use this cred for testing purpose: test@example.com / password123
+- Use `@lucide/svelte` for icons
 
 ## TailwindCSS best practices
 

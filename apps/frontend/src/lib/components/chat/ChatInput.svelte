@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Button } from "$lib/components/ui/button";
-  import { Send } from "lucide-svelte";
+  import { Send } from "@lucide/svelte";
   import { Textarea } from "$lib/components/ui/textarea";
 
   let { onSend }: { onSend: (content: string) => void } = $props();

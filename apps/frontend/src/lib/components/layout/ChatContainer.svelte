@@ -4,7 +4,7 @@
   import MessageList from "$lib/components/chat/MessageList.svelte";
   import ChatInput from "$lib/components/chat/ChatInput.svelte";
   import { Button } from "$lib/components/ui/button";
-  import { Info } from "lucide-svelte";
+  import { Info } from "@lucide/svelte";
 
   interface Props {
     toggleDetail?: () => void;
