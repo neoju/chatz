@@ -7,6 +7,7 @@
   import { Info, MessageSquare, Loader2 } from "@lucide/svelte";
   import { chatStore } from "$lib/stores/chat.svelte";
   import { messageApi } from "$lib/api/message";
+  import { conversationApi } from "$lib/api/conversation";
   import { auth } from "$lib/stores/auth";
   import { get } from "svelte/store";
 
@@ -21,6 +22,7 @@
   let hasMore = $state(false);
   let loading = $state(false);
   let loadingMore = $state(false);
+  let lastMarkedReadId = $state<string | null>(null);
 
   async function loadMessages(conversationId: string, cursor?: string) {
     if (cursor) {
@@ -68,11 +70,25 @@
 
   $effect(() => {
     if (chatStore.activeConversationId) {
+      lastMarkedReadId = null;
       loadMessages(chatStore.activeConversationId);
     } else {
       messages = [];
       nextCursor = null;
       hasMore = false;
+    }
+  });
+
+  $effect(() => {
+    const activeId = chatStore.activeConversationId;
+    if (activeId && messages.length > 0) {
+      const latestMsg = messages[messages.length - 1];
+      if (latestMsg && latestMsg.id !== lastMarkedReadId) {
+        lastMarkedReadId = latestMsg.id;
+        conversationApi.markAsRead(activeId, { lastReadMessageId: latestMsg.id })
+          .catch(err => console.error("Failed to mark as read:", err));
+        chatStore.unreadOverrides[activeId] = 0;
+      }
     }
   });
 

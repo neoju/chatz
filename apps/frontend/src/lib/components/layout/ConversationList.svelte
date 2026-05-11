@@ -149,7 +149,7 @@
             <Tooltip.Root>
               <Tooltip.Trigger class="w-full">
                 <ConversationItem
-                  conversation={conv}
+                  conversation={{ ...conv, unreadCount: chatStore.unreadOverrides[conv.id] ?? conv.unreadCount }}
                   timestamp={formatTimestamp(conv.lastActivityAt)}
                   isActive={chatStore.activeConversationId === conv.id}
                   onclick={() => selectConversation(conv.id)}

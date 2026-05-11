@@ -2,6 +2,8 @@ import { api } from "./api-client";
 import type {
   ListConversationsPaginatedResponse,
   ListConversationsQuery,
+  MarkReadRequest,
+  MemberResponse,
 } from "@chatz/dto";
 
 export const conversationApi = {
@@ -19,5 +21,8 @@ export const conversationApi = {
     return api.get<ListConversationsPaginatedResponse>(
       `/v1/conversations${queryString}`,
     );
+  },
+  markAsRead: (conversationId: string, data: MarkReadRequest) => {
+    return api.post<MemberResponse>(`/v1/conversations/${conversationId}/read`, data);
   },
 };
