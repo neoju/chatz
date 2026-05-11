@@ -1,4 +1,4 @@
-import { api } from './api-client';
+import { api } from "./api-client";
 
 export type UserProfile = {
   id: string;
@@ -6,5 +6,5 @@ export type UserProfile = {
 };
 
 export const userApi = {
-  me: () => api.get<UserProfile>('/users/me')
+  me: () => api.get<UserProfile>("/users/me"),
 };

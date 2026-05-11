@@ -1,9 +1,9 @@
-import { writable, derived } from 'svelte/store';
-import { authApi } from '$lib/api/auth';
-import { userApi, type UserProfile } from '$lib/api/user';
-import { getToken, removeToken, setToken } from '$lib/token';
-import type { LoginRequest, RegisterRequest } from '@chatz/dto';
-import type { ResetPasswordRequest } from '@chatz/dto';
+import { writable, derived } from "svelte/store";
+import { authApi } from "$lib/api/auth";
+import { userApi, type UserProfile } from "$lib/api/user";
+import { getToken, removeToken, setToken } from "$lib/token";
+import type { LoginRequest, RegisterRequest } from "@chatz/dto";
+import type { ResetPasswordRequest } from "@chatz/dto";
 
 type AuthState = {
   user: UserProfile | null;
@@ -15,7 +15,7 @@ function createAuthStore() {
   const { subscribe, set, update } = writable<AuthState>({
     user: null,
     loading: false,
-    initialized: false
+    initialized: false,
   });
 
   async function init() {
@@ -70,7 +70,7 @@ function createAuthStore() {
     register,
     forgotPassword,
     resetPassword,
-    logout
+    logout,
   };
 }
 

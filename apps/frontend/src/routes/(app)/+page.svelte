@@ -1,17 +1,23 @@
 <script lang="ts">
   import { ChatLayout, Sidebar, ChatContainer, ChatDetail } from '$lib/components/layout';
+
+  let showDetail = $state(false);
+
+  function toggleDetail() {
+    showDetail = !showDetail;
+  }
 </script>
 
-<ChatLayout showDetail={true}>
+<ChatLayout {showDetail}>
   {#snippet sidebar()}
     <Sidebar />
   {/snippet}
 
   {#snippet chat()}
-    <ChatContainer />
+    <ChatContainer {toggleDetail} />
   {/snippet}
 
   {#snippet detail()}
-    <ChatDetail />
+    <ChatDetail bind:showDetail />
   {/snippet}
 </ChatLayout>
