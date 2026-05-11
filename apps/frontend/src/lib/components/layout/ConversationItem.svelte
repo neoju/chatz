@@ -2,15 +2,13 @@
   import * as Avatar from '$lib/components/ui/avatar';
   import { cn } from '$lib/utils';
   import { Check, CheckCheck } from '@lucide/svelte';
+  import type { ListConversationsResponse } from '@chatz/dto';
+  import { ConversationType } from '@chatz/shared';
 
   interface Props {
-    id: string;
-    name: string;
-    avatarUrl?: string;
-    lastMessage: string;
+    conversation: ListConversationsResponse[number];
     timestamp: string;
     online?: boolean;
-    unreadCount?: number;
     isRead?: boolean;
     isSent?: boolean;
     isDelivered?: boolean;
@@ -19,24 +17,31 @@
   }
 
   const {
-    name,
-    avatarUrl,
-    lastMessage,
+    conversation,
     timestamp,
     online = false,
-    unreadCount = 0,
     isRead = false,
     isSent = false,
     isDelivered = false,
     isActive = false,
-    isTyping = false
+    isTyping = false,
   }: Props = $props();
+
+  const isDM = $derived(conversation.type === ConversationType.DM);
+  const name = $derived(conversation.displayName);
+  const avatarUrl = $derived(conversation.avatarUrl);
+  const lastMessage = $derived(conversation.lastMessage?.content ?? 'No messages yet');
+  const lastMessageSenderName = $derived(conversation.lastMessage?.sender?.name);
+  const lastMessageSenderAvatarUrl = $derived(conversation.lastMessage?.sender?.avatarUrl);
+  const unreadCount = $derived(conversation.unreadCount);
+  const hasUnread = $derived(unreadCount > 0);
 </script>
 
 <button
   class={cn(
     "conversation-item",
-    isActive && "is-active"
+    isActive && "is-active",
+    hasUnread && "has-unread"
   )}
 >
   <div class="relative flex-shrink-0">
@@ -45,7 +50,7 @@
         <Avatar.Image src={avatarUrl} alt={name} />
       {:else}
         <Avatar.Fallback class="avatar-fallback">
-          {name.charAt(0).toUpperCase()}
+          {name?.charAt(0).toUpperCase()}
         </Avatar.Fallback>
       {/if}
     </Avatar.Root>
@@ -60,8 +65,20 @@
       <span class="timestamp">{timestamp}</span>
     </div>
     <div class="flex items-center justify-between gap-2">
-      <p class={cn("truncate text-xs", isTyping ? "text-green-500" : "text-gray-500")}>
-        {lastMessage}
+      <p class={cn("truncate text-xs flex items-center gap-1.5", isTyping ? "text-green-500" : "text-gray-500")}>
+        {#if !isDM && lastMessageSenderName}
+          <Avatar.Root class="size-4">
+            {#if lastMessageSenderAvatarUrl}
+              <Avatar.Image src={lastMessageSenderAvatarUrl} alt={lastMessageSenderName} />
+            {:else}
+              <Avatar.Fallback class="text-[8px] bg-blue-100 text-blue-600">
+                {lastMessageSenderName.charAt(0).toUpperCase()}
+              </Avatar.Fallback>
+            {/if}
+          </Avatar.Root>
+          <span class="truncate font-medium text-gray-700">{lastMessageSenderName}:</span>
+        {/if}
+        <span class="truncate">{lastMessage}</span>
       </p>
       <div class="flex shrink-0 items-center gap-1">
         {#if unreadCount > 0}
@@ -92,6 +109,10 @@
 
   .conversation-item.is-active {
     @apply bg-gray-100;
+  }
+
+  .conversation-item.has-unread {
+    @apply bg-blue-50/60;
   }
 
   .avatar {

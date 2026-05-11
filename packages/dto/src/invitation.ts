@@ -34,3 +34,9 @@ export const ListInvitesQuerySchema = z
   .describe('List invites query parameters');
 
 export type ListInvitesQuery = z.infer<typeof ListInvitesQuerySchema>;
+
+export const AcceptInviteResponseSchema = z.object({
+  success: z.boolean().describe('Whether the invite was accepted successfully')
+}).describe('Accept invite response');
+
+export type AcceptInviteResponse = z.infer<typeof AcceptInviteResponseSchema>;

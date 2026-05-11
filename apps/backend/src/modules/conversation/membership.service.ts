@@ -55,6 +55,16 @@ export default function membershipService(_app: FastifyInstance) {
 
       await membership.save();
 
+      await Conversation.findByIdAndUpdate(conversationId, {
+        lastActivityAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      await ConversationMember.updateMany(
+        { conversationId },
+        { $set: { updatedAt: new Date() } }
+      );
+
       return mapMemberResponse({ ...membership.toObject(), id: membership.id });
     },
 
@@ -88,6 +98,16 @@ export default function membershipService(_app: FastifyInstance) {
 
       if (remainingMembers === 0) {
         await Conversation.findByIdAndUpdate(conversationId, { deletedAt: new Date() });
+      } else {
+        await Conversation.findByIdAndUpdate(conversationId, {
+          lastActivityAt: new Date(),
+          updatedAt: new Date()
+        });
+
+        await ConversationMember.updateMany(
+          { conversationId },
+          { $set: { updatedAt: new Date() } }
+        );
       }
     },
 
@@ -121,6 +141,16 @@ export default function membershipService(_app: FastifyInstance) {
 
       targetMembership.role = params.role;
       await targetMembership.save();
+
+      await Conversation.findByIdAndUpdate(conversationId, {
+        lastActivityAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      await ConversationMember.updateMany(
+        { conversationId },
+        { $set: { updatedAt: new Date() } }
+      );
 
       return mapMemberResponse({ ...targetMembership.toObject(), id: targetMembership.id });
     },

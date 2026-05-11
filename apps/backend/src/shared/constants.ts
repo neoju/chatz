@@ -1,0 +1,2 @@
+export const DEFAULT_PAGE_LIMIT = 50;
+export const LAST_MESSAGE_PREVIEW_MAX_LENGTH = 100;

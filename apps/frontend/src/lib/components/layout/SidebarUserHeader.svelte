@@ -78,7 +78,7 @@
             <Avatar.Image src={avatarUrl} alt={name} />
           {:else if name}
             <Avatar.Fallback class="user-avatar-fallback">
-              {name.charAt(0).toUpperCase()}
+              {name?.charAt(0).toUpperCase()}
             </Avatar.Fallback>
           {/if}
           {#if online}

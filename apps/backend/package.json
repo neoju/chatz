@@ -13,7 +13,8 @@
     "format:check": "prettier --check \"src/**/*.{ts,js,json}\"",
     "check-types": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "db:seed": "tsx --tsconfig ./tsconfig.json src/scripts/seed.ts"
   },
   "dependencies": {
     "@chatz/dto": "workspace:*",

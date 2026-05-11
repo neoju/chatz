@@ -37,7 +37,8 @@ const conversationMemberSchema = new mongoose.Schema<IConversationMember>(
   },
   {
     timestamps: true,
-    versionKey: '__v'
+    versionKey: '__v',
+    collection: 'conversation_members'
   }
 );
 

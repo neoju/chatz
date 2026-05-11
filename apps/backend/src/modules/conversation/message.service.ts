@@ -1,7 +1,9 @@
 import { FastifyInstance } from 'fastify';
 import mongoose from 'mongoose';
-import { MessageContentType } from '@chatz/shared';
+import { MessageContentType, ConversationRole } from '@chatz/shared';
 import { SendMessageRequest, EditMessageRequest, MessageResponse } from '@chatz/dto';
+
+import { DEFAULT_PAGE_LIMIT } from '@/shared/constants.js';
 
 import { Message, IMessage } from './message.schema.js';
 import { MessageAttachment } from './message-attachment.schema.js';
@@ -103,8 +105,20 @@ export default function messageService(app: FastifyInstance) {
         }
 
         await Conversation.findByIdAndUpdate(params.conversationId, {
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          lastActivityAt: new Date(),
+          lastMessage: {
+            content: params.content,
+            senderId: new mongoose.Types.ObjectId(userId),
+            sentAt: new Date()
+          }
         }).session(session);
+
+        await ConversationMember.updateMany(
+          { conversationId: params.conversationId },
+          { $set: { updatedAt: new Date() } },
+          { session }
+        );
 
         await ConversationMember.updateMany(
           {
@@ -127,7 +141,7 @@ export default function messageService(app: FastifyInstance) {
       }
     },
 
-    async listMessages(conversationId: string, userId: string, limit: number = 50, cursor?: string) {
+    async listMessages(conversationId: string, userId: string, limit: number = DEFAULT_PAGE_LIMIT, cursor?: string) {
       const membership = await ConversationMember.findOne({
         conversationId,
         userId
@@ -143,7 +157,7 @@ export default function messageService(app: FastifyInstance) {
       };
 
       if (cursor) {
-        const decoded = decodeCursor(cursor);
+        const decoded = decodeCursor<{ sentAt: string; _id: string }>(cursor);
         query.$or = [
           { sentAt: { $lt: new Date(decoded.sentAt) } },
           { sentAt: new Date(decoded.sentAt), _id: { $lt: new mongoose.Types.ObjectId(decoded._id) } }
@@ -161,7 +175,7 @@ export default function messageService(app: FastifyInstance) {
       let nextCursor: string | null = null;
       if (hasMore && items.length > 0) {
         const lastMsg = items[items.length - 1]!;
-        nextCursor = encodeCursor(lastMsg.sentAt, lastMsg._id.toString());
+        nextCursor = encodeCursor({ sentAt: lastMsg.sentAt.toISOString(), _id: lastMsg._id.toString() });
       }
 
       const results = await Promise.all(
@@ -204,10 +218,22 @@ export default function messageService(app: FastifyInstance) {
       return mapToResponse({ ...message.toObject(), id: message.id }, message.conversationId.toString());
     },
 
-    async deleteMessage(messageId: string, userId: string, isAdmin: boolean) {
+    async deleteMessage(messageId: string, userId: string) {
       const message = await Message.findById(messageId);
       if (!message) {
         throw new NotFoundException('Message not found');
+      }
+
+      let isAdmin = false;
+      if (message.senderId.toString() !== userId) {
+        const membership = await ConversationMember.findOne({
+          conversationId: message.conversationId,
+          userId
+        });
+        if (!membership) {
+          throw new ForbiddenException('Not a member of this conversation');
+        }
+        isAdmin = membership.role === ConversationRole.ADMIN;
       }
 
       if (message.senderId.toString() !== userId && !isAdmin) {

@@ -3,9 +3,14 @@ import mongoose from 'mongoose';
 import { ConversationType, ConversationRole } from '@chatz/shared';
 import { CreateConversationRequest, UpdateConversationRequest, ConversationResponse } from '@chatz/dto';
 
+import { DEFAULT_PAGE_LIMIT } from '@/shared/constants.js';
+import { LAST_MESSAGE_PREVIEW_MAX_LENGTH } from '@/shared/constants.js';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@/shared/errors.js';
+
 import { Conversation, IConversation } from './conversation.schema.js';
 import { ConversationMember } from './conversation-member.schema.js';
-import { BadRequestException, ForbiddenException, NotFoundException } from '@/shared/errors.js';
+import { User } from '@/modules/user/user.schema.js';
+import { encodeCursor, decodeCursor } from './cursor.utils.js';
 
 export default function conversationService(_app: FastifyInstance) {
   async function mapToResponse(
@@ -24,6 +29,7 @@ export default function conversationService(_app: FastifyInstance) {
       name: conversation.name ?? null,
       createdAt: conversation.createdAt.toISOString(),
       updatedAt: conversation.updatedAt.toISOString(),
+      lastActivityAt: conversation.lastActivityAt.toISOString(),
       pinned: membership?.pinned ?? false,
       muted: membership?.muted ?? false,
       unreadCount: membership?.unreadCount ?? 0,
@@ -61,10 +67,25 @@ export default function conversationService(_app: FastifyInstance) {
           }
 
           const existingDm = await ConversationMember.aggregate([
-            { $match: { userId: new mongoose.Types.ObjectId(userId) } },
             {
               $lookup: {
-                from: 'conversationmembers',
+                from: 'conversations',
+                localField: 'conversationId',
+                foreignField: '_id',
+                as: 'conversation'
+              }
+            },
+            { $unwind: '$conversation' },
+            {
+              $match: {
+                userId: new mongoose.Types.ObjectId(userId),
+                'conversation.type': ConversationType.DM,
+                'conversation.deletedAt': null
+              }
+            },
+            {
+              $lookup: {
+                from: 'conversation_members',
                 let: { convId: '$conversationId' },
                 pipeline: [
                   { $match: { $expr: { $eq: ['$conversationId', '$$convId'] } } },
@@ -74,15 +95,6 @@ export default function conversationService(_app: FastifyInstance) {
               }
             },
             { $match: { otherMembers: { $ne: [] } } },
-            {
-              $lookup: {
-                from: 'conversations',
-                localField: 'conversationId',
-                foreignField: '_id',
-                as: 'conversation'
-              }
-            },
-            { $match: { 'conversation.type': ConversationType.DM, 'conversation.deletedAt': null } },
             { $limit: 1 }
           ]).session(session);
 
@@ -124,43 +136,187 @@ export default function conversationService(_app: FastifyInstance) {
       }
     },
 
-    async listConversations(userId: string, limit: number = 50, _cursor?: string) {
-      const memberships = await ConversationMember.find({
-        userId
-      })
-        .sort({ pinned: -1, updatedAt: -1 })
-        .limit(limit)
-        .lean();
+    async listConversations(userId: string, limit: number = DEFAULT_PAGE_LIMIT, cursor?: string) {
+      const userObjectId = new mongoose.Types.ObjectId(userId);
 
-      const conversationIds = memberships.map((m) => m.conversationId);
+      const pipeline: any[] = [
+        { $match: { userId: userObjectId } },
+        {
+          $lookup: {
+            from: 'conversations',
+            localField: 'conversationId',
+            foreignField: '_id',
+            as: 'conversation'
+          }
+        },
+        { $unwind: '$conversation' },
+        { $match: { 'conversation.deletedAt': null } },
+        {
+          $addFields: {
+            hasUnread: { $cond: [{ $gt: ['$unreadCount', 0] }, 1, 0] },
+            activityAt: { $ifNull: ['$conversation.lastActivityAt', '$conversation.updatedAt'] }
+          }
+        }
+      ];
 
-      const conversations = await Conversation.find({
-        _id: { $in: conversationIds },
-        deletedAt: null
+      if (cursor) {
+        const c = decodeCursor<{ pinned: boolean; hasUnread: number; lastActivityAt: string; _id: string }>(cursor);
+        const lastActivityAt = new Date(c.lastActivityAt);
+        const lastId = new mongoose.Types.ObjectId(c._id);
+
+        pipeline.push({
+          $match: {
+            $or: [
+              { pinned: { $lt: c.pinned } },
+              { pinned: c.pinned, hasUnread: { $lt: c.hasUnread } },
+              { pinned: c.pinned, hasUnread: c.hasUnread, activityAt: { $lt: lastActivityAt } },
+              { pinned: c.pinned, hasUnread: c.hasUnread, activityAt: lastActivityAt, _id: { $lt: lastId } }
+            ]
+          }
+        });
+      }
+
+      pipeline.push({
+        $sort: {
+          pinned: -1,
+          hasUnread: -1,
+          activityAt: -1,
+          _id: -1
+        }
+      });
+
+      pipeline.push({ $limit: limit + 1 });
+
+      const memberships = await ConversationMember.aggregate(pipeline);
+
+      const hasMore = memberships.length > limit;
+      const items = memberships.slice(0, limit);
+
+      let nextCursor: string | null = null;
+      if (hasMore && items.length > 0) {
+        const last = items[items.length - 1]!;
+        nextCursor = encodeCursor({
+          pinned: last.pinned,
+          hasUnread: last.hasUnread,
+          lastActivityAt: last.activityAt.toISOString(),
+          _id: last._id.toString()
+        });
+      }
+
+      const conversationIds = items.map((m) => m.conversationId);
+
+      // Fetch member counts for the conversations
+      const memberCounts = await ConversationMember.aggregate([
+        { $match: { conversationId: { $in: conversationIds } } },
+        { $group: { _id: '$conversationId', count: { $sum: 1 } } }
+      ]);
+      const memberCountMap = new Map(memberCounts.map((m) => [m._id.toString(), m.count]));
+
+      // Fetch all members of these conversations to identify DM partners
+      const allMembers = await ConversationMember.find({
+        conversationId: { $in: conversationIds }
       }).lean();
 
-      const conversationMap = new Map(conversations.map((c) => [c._id.toString(), c]));
+      const dmConversationIds = items
+        .filter((i) => i.conversation.type === ConversationType.DM)
+        .map((i) => i.conversationId.toString());
 
-      const results = memberships
+      const otherMemberUserIds = new Set<string>();
+      const conversationOtherMembers = new Map<string, { userId: string; nickname: string | null }>();
+
+      for (const member of allMembers) {
+        const convId = member.conversationId.toString();
+        if (dmConversationIds.includes(convId) && member.userId.toString() !== userId) {
+          otherMemberUserIds.add(member.userId.toString());
+          conversationOtherMembers.set(convId, {
+            userId: member.userId.toString(),
+            nickname: member.nickname ?? null
+          });
+        }
+      }
+
+      // Identify users needed for last message sender info
+      const lastMessageSenderIds = new Set<string>();
+      for (const item of items) {
+        if (item.conversation.lastMessage?.senderId) {
+          lastMessageSenderIds.add(item.conversation.lastMessage.senderId.toString());
+        }
+      }
+
+      const allUserIds = new Set([...otherMemberUserIds, ...lastMessageSenderIds]);
+
+      const users = await User.find({
+        _id: { $in: Array.from(allUserIds).map((id) => new mongoose.Types.ObjectId(id)) }
+      }).lean();
+
+      const userMap = new Map(users.map((u) => [u._id.toString(), { nickname: u.nickname, avatarUrl: u.avatarUrl }]));
+
+      const results = items
         .map((m) => {
-          const conv = conversationMap.get(m.conversationId.toString());
-          if (!conv) return null;
+          const conv = m.conversation;
+          const lastMsg = conv.lastMessage;
+
+          const lastMessagePreview = lastMsg?.content
+            ? lastMsg.content.length > LAST_MESSAGE_PREVIEW_MAX_LENGTH
+              ? lastMsg.content.slice(0, LAST_MESSAGE_PREVIEW_MAX_LENGTH) + '...'
+              : lastMsg.content
+            : null;
+
+          let displayName: string;
+          let avatarUrl: string | null = null;
+          if (conv.type === ConversationType.GROUP) {
+            displayName = conv.name ?? 'Unnamed Group';
+          } else {
+            const otherMember = conversationOtherMembers.get(conv._id.toString());
+            if (otherMember) {
+              const otherUser = userMap.get(otherMember.userId);
+              displayName = otherMember.nickname ?? otherUser?.nickname ?? 'Direct Message';
+              avatarUrl = otherUser?.avatarUrl ?? null;
+            } else {
+              displayName = 'Direct Message';
+            }
+          }
+
+          const lastMsgSenderId = lastMsg?.senderId?.toString();
+          const lastMsgSenderUser = lastMsgSenderId ? userMap.get(lastMsgSenderId) : undefined;
+          const lastMessage = lastMessagePreview
+            ? {
+              content: lastMessagePreview,
+              sender: lastMsgSenderId
+                ? {
+                  id: lastMsgSenderId,
+                  name: lastMsgSenderUser?.nickname ?? 'Unknown',
+                  avatarUrl: lastMsgSenderUser?.avatarUrl ?? null
+                }
+                : null,
+              createdAt: lastMsg?.sentAt?.toISOString() ?? conv.updatedAt.toISOString()
+            }
+            : null;
 
           return {
             id: conv._id.toString(),
             type: conv.type,
             name: conv.name ?? null,
+            displayName,
+            avatarUrl,
             createdAt: conv.createdAt.toISOString(),
             updatedAt: conv.updatedAt.toISOString(),
+            lastActivityAt: m.activityAt.toISOString(),
             pinned: m.pinned,
             muted: m.muted,
             unreadCount: m.unreadCount,
-            lastReadMessageId: m.lastReadMessageId?.toString() ?? null
+            lastReadMessageId: m.lastReadMessageId?.toString() ?? null,
+            memberCount: memberCountMap.get(m.conversationId.toString()) ?? 0,
+            lastMessage
           };
         })
         .filter((r): r is NonNullable<typeof r> => r !== null);
 
-      return results;
+      return {
+        items: results,
+        nextCursor,
+        hasMore
+      };
     },
 
     async getConversation(conversationId: string, userId: string) {
@@ -217,7 +373,13 @@ export default function conversationService(_app: FastifyInstance) {
       }
 
       conversation.name = params.name;
+      conversation.lastActivityAt = new Date();
       await conversation.save();
+
+      await ConversationMember.updateMany(
+        { conversationId },
+        { $set: { updatedAt: new Date() } }
+      );
 
       return mapToResponse({ ...conversation.toObject(), id: conversation.id }, userId);
     },

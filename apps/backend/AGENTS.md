@@ -14,3 +14,4 @@
 
 - Use Model.id instead of `_id.toString()` to get the string version of _id
 - Do not manually cast strings to `ObjectId` in queries unless the API requires it; let Mongoose cast when possible
+- Never use magic numbers or magic string. Create constant in shared/constants.ts

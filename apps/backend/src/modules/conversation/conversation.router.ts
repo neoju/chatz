@@ -2,37 +2,14 @@ import { FastifyInstance } from 'fastify';
 import { z } from 'zod/v4';
 import * as dto from '@chatz/dto';
 
+import { DEFAULT_PAGE_LIMIT } from '@/shared/constants.js';
+
 import conversationService from './conversation.service.js';
 import messageService from './message.service.js';
 import membershipService from './membership.service.js';
 import invitationService from './invitation.service.js';
 import readReceiptService from './read-receipt.service.js';
-import { isAdmin } from '@/middlewares/conversation-member.js';
 
-const ListConversationsResponseSchema = z.array(
-  z.object({
-    id: z.string(),
-    type: z.enum(['dm', 'group']),
-    name: z.string().nullable(),
-    createdAt: z.string(),
-    updatedAt: z.string(),
-    pinned: z.boolean(),
-    muted: z.boolean(),
-    unreadCount: z.number(),
-    lastReadMessageId: z.string().nullable(),
-    memberCount: z.number()
-  })
-);
-
-const ListMessagesResponseSchema = z.object({
-  items: z.array(dto.MessageResponseSchema),
-  nextCursor: z.string().nullable(),
-  hasMore: z.boolean()
-});
-
-const AcceptInviteResponseSchema = z.object({
-  success: z.boolean()
-});
 
 export default function conversationRouter(app: FastifyInstance) {
   const convService = conversationService(app);
@@ -55,18 +32,18 @@ export default function conversationRouter(app: FastifyInstance) {
     }
   );
 
-  app.get<{ Querystring: dto.ListMessagesQuery }>(
+  app.get<{ Querystring: dto.ListConversationsQuery }>(
     '/conversations',
     {
       schema: {
-        querystring: dto.ListMessagesQuerySchema,
-        response: { 200: ListConversationsResponseSchema }
+        querystring: dto.ListConversationsQuerySchema,
+        response: { 200: dto.ListConversationsPaginatedResponseSchema }
       }
     },
     async (req) => {
       return convService.listConversations(
         req.user!.userId,
-        req.query.limit ?? 50,
+        req.query.limit ?? DEFAULT_PAGE_LIMIT,
         req.query.cursor
       );
     }
@@ -129,14 +106,14 @@ export default function conversationRouter(app: FastifyInstance) {
     {
       schema: {
         querystring: dto.ListMessagesQuerySchema,
-        response: { 200: ListMessagesResponseSchema }
+        response: { 200: dto.ListMessagesResponseSchema }
       }
     },
     async (req) => {
       return msgService.listMessages(
         req.query.conversationId,
         req.user!.userId,
-        req.query.limit ?? 50,
+        req.query.limit ?? DEFAULT_PAGE_LIMIT,
         req.query.cursor
       );
     }
@@ -163,7 +140,7 @@ export default function conversationRouter(app: FastifyInstance) {
       }
     },
     async (req, res) => {
-      await msgService.deleteMessage(req.params.id, req.user!.userId, isAdmin(req.membership!));
+      await msgService.deleteMessage(req.params.id, req.user!.userId);
       return res.code(204).send();
     }
   );
@@ -181,7 +158,7 @@ export default function conversationRouter(app: FastifyInstance) {
         req.query.conversationId,
         req.user!.userId,
         req.query.query,
-        req.query.limit ?? 20,
+        req.query.limit ?? DEFAULT_PAGE_LIMIT,
         req.query.cursor
       );
     }
@@ -309,7 +286,7 @@ export default function conversationRouter(app: FastifyInstance) {
     '/invites/:id/accept',
     {
       schema: {
-        response: { 200: AcceptInviteResponseSchema }
+        response: { 200: dto.AcceptInviteResponseSchema }
       }
     },
     async (req) => {
