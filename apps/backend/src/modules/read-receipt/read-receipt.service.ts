@@ -2,8 +2,8 @@ import { FastifyInstance } from 'fastify';
 import mongoose from 'mongoose';
 import { MarkReadRequest, UnreadCountResponse, UnreadSummaryResponse } from '@chatz/dto';
 
-import { ConversationMember } from './conversation-member.schema.js';
-import { Message } from './message.schema.js';
+import { ConversationMember } from '@/shared/schemas/conversation-member.schema.js';
+import { Message } from '@/shared/schemas/message.schema.js';
 import { NotFoundException, ForbiddenException } from '@/shared/errors.js';
 
 export default function readReceiptService(_app: FastifyInstance) {

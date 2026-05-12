@@ -7,10 +7,10 @@ import { DEFAULT_PAGE_LIMIT } from '@/shared/constants.js';
 import { LAST_MESSAGE_PREVIEW_MAX_LENGTH } from '@/shared/constants.js';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@/shared/errors.js';
 
-import { Conversation, IConversation } from './conversation.schema.js';
-import { ConversationMember } from './conversation-member.schema.js';
+import { Conversation, IConversation } from '@/shared/schemas/conversation.schema.js';
+import { ConversationMember } from '@/shared/schemas/conversation-member.schema.js';
 import { User } from '@/shared/schemas/user.schema.js';
-import { encodeCursor, decodeCursor } from './cursor.utils.js';
+import { encodeCursor, decodeCursor } from '@/shared/cursor.utils.js';
 
 export default function conversationService(_app: FastifyInstance) {
   async function mapToResponse(

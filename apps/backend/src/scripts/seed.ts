@@ -1,10 +1,10 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 import { User } from '@/shared/schemas/user.schema.js';
-import { Conversation } from '@/modules/conversation/conversation.schema.js';
-import { ConversationMember } from '@/modules/conversation/conversation-member.schema.js';
-import { Message } from '@/modules/conversation/message.schema.js';
-import { MessageAttachment } from '@/modules/conversation/message-attachment.schema.js';
+import { Conversation } from '@/shared/schemas/conversation.schema.js';
+import { ConversationMember } from '@/shared/schemas/conversation-member.schema.js';
+import { Message } from '@/shared/schemas/message.schema.js';
+import { MessageAttachment } from '@/shared/schemas/message-attachment.schema.js';
 import { ConversationType, ConversationRole, MessageContentType, UserStatus } from '@chatz/shared';
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/chatz';

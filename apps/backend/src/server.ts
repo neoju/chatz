@@ -14,6 +14,10 @@ import authMiddleware from '@/middlewares/auth.js';
 import authRouter from '@/modules/auth/auth.router.js';
 import userRouter from '@/modules/user/user.router.js';
 import conversationRouter from '@/modules/conversation/conversation.router.js';
+import messageRouter from '@/modules/message/message.router.js';
+import membershipRouter from '@/modules/membership/membership.router.js';
+import invitationRouter from '@/modules/invitation/invitation.router.js';
+import readReceiptRouter from '@/modules/read-receipt/read-receipt.router.js';
 
 const server = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
 
@@ -36,6 +40,10 @@ server.register(
 
     app.register(userRouter);
     app.register(conversationRouter);
+    app.register(messageRouter);
+    app.register(membershipRouter);
+    app.register(invitationRouter);
+    app.register(readReceiptRouter);
   },
   { prefix: '/api/v1' }
 );

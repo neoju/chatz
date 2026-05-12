@@ -3,9 +3,9 @@ import mongoose from 'mongoose';
 import { InviteStatus, ConversationRole, ConversationType } from '@chatz/shared';
 import { CreateInviteRequest, InviteResponse } from '@chatz/dto';
 
-import { GroupInvite, IGroupInvite } from './group-invite.schema.js';
-import { ConversationMember } from './conversation-member.schema.js';
-import { Conversation } from './conversation.schema.js';
+import { GroupInvite, IGroupInvite } from '@/shared/schemas/group-invite.schema.js';
+import { ConversationMember } from '@/shared/schemas/conversation-member.schema.js';
+import { Conversation } from '@/shared/schemas/conversation.schema.js';
 import { User } from '@/shared/schemas/user.schema.js';
 import {
   BadRequestException,

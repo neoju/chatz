@@ -3,8 +3,8 @@ import mongoose from 'mongoose';
 import { ConversationRole } from '@chatz/shared';
 import { UpdateMemberRequest, MemberResponse, MemberNicknameRequest } from '@chatz/dto';
 
-import { ConversationMember, IConversationMember } from './conversation-member.schema.js';
-import { Conversation } from './conversation.schema.js';
+import { ConversationMember, IConversationMember } from '@/shared/schemas/conversation-member.schema.js';
+import { Conversation } from '@/shared/schemas/conversation.schema.js';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@/shared/errors.js';
 
 export default function membershipService(_app: FastifyInstance) {

@@ -6,11 +6,11 @@ import { SendMessageRequest, EditMessageRequest, MessageResponse } from '@chatz/
 import { DEFAULT_PAGE_LIMIT } from '@/shared/constants.js';
 
 import { User } from '@/shared/schemas/user.schema.js';
-import { Message, IMessage } from './message.schema.js';
-import { MessageAttachment } from './message-attachment.schema.js';
-import { ConversationMember } from './conversation-member.schema.js';
-import { Conversation } from './conversation.schema.js';
-import { encodeCursor, decodeCursor } from './cursor.utils.js';
+import { Message, IMessage } from '@/shared/schemas/message.schema.js';
+import { MessageAttachment } from '@/shared/schemas/message-attachment.schema.js';
+import { ConversationMember } from '@/shared/schemas/conversation-member.schema.js';
+import { Conversation } from '@/shared/schemas/conversation.schema.js';
+import { encodeCursor, decodeCursor } from '@/shared/cursor.utils.js';
 import {
   BadRequestException,
   ForbiddenException,

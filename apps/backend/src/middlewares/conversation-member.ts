@@ -2,8 +2,8 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
 import { ConversationRole } from '@chatz/shared';
 
-import { IConversationMember, ConversationMember } from '@/modules/conversation/conversation-member.schema.js';
-import { IConversation, Conversation } from '@/modules/conversation/conversation.schema.js';
+import { IConversationMember, ConversationMember } from '@/shared/schemas/conversation-member.schema.js';
+import { IConversation, Conversation } from '@/shared/schemas/conversation.schema.js';
 
 declare module 'fastify' {
   interface FastifyRequest {

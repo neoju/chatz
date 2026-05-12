@@ -19,7 +19,7 @@
       <Avatar.Image src={message.sender.avatarUrl} alt={message.sender.name} />
     {/if}
     <Avatar.Fallback class={isUser ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}>
-      {message.sender.name.charAt(0).toUpperCase()}
+      {message.sender.name?.charAt(0).toUpperCase()}
     </Avatar.Fallback>
   </Avatar.Root>
 
