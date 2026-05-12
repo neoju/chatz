@@ -75,8 +75,7 @@ export type ListMessagesQuery = z.infer<typeof ListMessagesQuerySchema>;
 
 export const ListMessagesResponseSchema = z.object({
   items: z.array(MessageResponseSchema).describe('List of messages'),
-  nextCursor: z.string().nullable().describe('Next page cursor (null if no more results)'),
-  hasMore: z.boolean().describe('Whether more results exist')
+  nextCursor: z.string().nullable().describe('Next page cursor (null if no more results)')
 }).describe('List messages response');
 
 export type ListMessagesResponse = z.infer<typeof ListMessagesResponseSchema>;

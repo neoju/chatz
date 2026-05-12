@@ -19,7 +19,6 @@
 
   let messages = $state<ChatMessage[]>([]);
   let nextCursor = $state<string | null>(null);
-  let hasMore = $state(false);
   let loading = $state(false);
   let loadingMore = $state(false);
   let lastMarkedReadId = $state<string | null>(null);
@@ -59,7 +58,6 @@
       }
 
       nextCursor = response.nextCursor;
-      hasMore = response.hasMore;
     } catch (err) {
       console.error("Failed to load messages:", err);
     } finally {
@@ -75,7 +73,6 @@
     } else {
       messages = [];
       nextCursor = null;
-      hasMore = false;
     }
   });
 
@@ -93,7 +90,7 @@
   });
 
   function handleLoadMore() {
-    if (chatStore.activeConversationId && nextCursor && hasMore && !loadingMore) {
+    if (chatStore.activeConversationId && nextCursor && !loadingMore) {
       loadMessages(chatStore.activeConversationId, nextCursor);
     }
   }
@@ -168,7 +165,7 @@
           {messages} 
           onLoadMore={handleLoadMore} 
           {loadingMore} 
-          {hasMore} 
+          hasMore={nextCursor !== null} 
         />
       {/if}
       <ChatInput onSend={handleSend} />

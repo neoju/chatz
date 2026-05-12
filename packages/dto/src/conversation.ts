@@ -85,8 +85,7 @@ export type ListConversationsResponse = z.infer<typeof ListConversationsResponse
 
 export const ListConversationsPaginatedResponseSchema = z.object({
   items: ListConversationsResponseSchema,
-  nextCursor: z.string().nullable().describe('Next page cursor (null if no more results)'),
-  hasMore: z.boolean().describe('Whether more results exist')
+  nextCursor: z.string().nullable().describe('Next page cursor (null if no more results)')
 }).describe('List conversations paginated response');
 
 export type ListConversationsPaginatedResponse = z.infer<typeof ListConversationsPaginatedResponseSchema>;

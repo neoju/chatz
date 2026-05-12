@@ -13,7 +13,6 @@ export const CursorPaginationResponseSchema = z
   .object({
     items: z.array(z.unknown()).describe('Result items'),
     nextCursor: z.string().nullable().describe('Next page cursor (null if no more results)'),
-    hasMore: z.boolean().describe('Whether more results exist')
   })
   .describe('Cursor pagination response');
 

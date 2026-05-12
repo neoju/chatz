@@ -181,13 +181,13 @@ export default function messageService(app: FastifyInstance) {
         .limit(limit + 1)
         .lean();
 
-      const hasMore = messages.length > limit;
       const items = messages.slice(0, limit);
-
       let nextCursor: string | null = null;
-      if (hasMore && items.length > 0) {
+      if (messages.length > limit && items.length > 0) {
         const lastMsg = items[items.length - 1]!;
         nextCursor = encodeCursor({ sentAt: lastMsg.sentAt.toISOString(), _id: lastMsg._id.toString() });
+      } else {
+        nextCursor = null;
       }
 
       const results = await Promise.all(
@@ -198,8 +198,7 @@ export default function messageService(app: FastifyInstance) {
 
       return {
         items: results.reverse(),
-        nextCursor,
-        hasMore
+        nextCursor
       };
     },
 
@@ -294,12 +293,13 @@ export default function messageService(app: FastifyInstance) {
         })
       ]);
 
-      const hasMore = results.length > limit;
       const items = results.slice(0, limit);
 
       let nextCursor: string | null = null;
-      if (hasMore) {
+      if (results.length > limit) {
         nextCursor = Buffer.from((skip + limit).toString()).toString('base64');
+      } else {
+        nextCursor = null;
       }
 
       const mappedResults = await Promise.all(

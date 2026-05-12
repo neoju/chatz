@@ -188,12 +188,10 @@ export default function conversationService(_app: FastifyInstance) {
       pipeline.push({ $limit: limit + 1 });
 
       const memberships = await ConversationMember.aggregate(pipeline);
-
-      const hasMore = memberships.length > limit;
       const items = memberships.slice(0, limit);
 
       let nextCursor: string | null = null;
-      if (hasMore && items.length > 0) {
+      if (memberships.length > limit && items.length > 0) {
         const last = items[items.length - 1]!;
         nextCursor = encodeCursor({
           pinned: last.pinned,
@@ -201,6 +199,8 @@ export default function conversationService(_app: FastifyInstance) {
           lastActivityAt: last.activityAt.toISOString(),
           _id: last._id.toString()
         });
+      } else {
+        nextCursor = null;
       }
 
       const conversationIds = items.map((m) => m.conversationId);
@@ -314,8 +314,7 @@ export default function conversationService(_app: FastifyInstance) {
 
       return {
         items: results,
-        nextCursor,
-        hasMore
+        nextCursor
       };
     },
 

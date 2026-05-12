@@ -17,7 +17,6 @@
 
   let conversations = $state<ListConversationsResponse>([]);
   let nextCursor = $state<string | null>(null);
-  let hasMore = $state(true);
   let loading = $state(false);
   let error = $state<string | null>(null);
   let showGoTop = $state(false);
@@ -48,7 +47,7 @@
 
   async function loadConversations(reset = false) {
     if (loading) return;
-    if (!reset && !hasMore) return;
+    if (!reset && nextCursor === null) return;
 
     loading = true;
     error = null;
@@ -71,7 +70,6 @@
       }
 
       nextCursor = response.nextCursor;
-      hasMore = response.hasMore;
     } catch (err) {
       console.error('[ConversationList] API error:', err);
       error = err instanceof Error ? err.message : 'Failed to load conversations';
@@ -168,7 +166,7 @@
       <div class="flex justify-center p-4">
         <Loader2 class="animate-spin text-gray-400" size={20} />
       </div>
-    {:else if hasMore}
+    {:else if nextCursor !== null}
       <div class="flex justify-center p-4">
          <Loader2 class="text-gray-200" size={20} />
       </div>
