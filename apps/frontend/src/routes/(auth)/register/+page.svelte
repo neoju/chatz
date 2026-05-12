@@ -6,16 +6,19 @@
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
 
-  import { LoginRequestSchema } from '@chatz/dto';
+  import { createRegisterSchema } from '$lib/validation/password';
+  import { ApiError } from '$lib/api/api-client';
 
   let email = $state('');
+  let nickname = $state('');
   let password = $state('');
+  let confirmPassword = $state('');
   let fieldErrors = $state<Record<string, string>>({});
   let apiError = $state('');
   let loading = $state(false);
 
   function validate() {
-    const result = LoginRequestSchema.safeParse({ email, password });
+    const result = createRegisterSchema().safeParse({ email, nickname, password, confirmPassword });
 
     if (!result.success) {
       const map: Record<string, string> = {};
@@ -42,10 +45,14 @@
 
     loading = true;
     try {
-      await auth.login({ email, password });
+      await auth.register({ email, nickname, password });
       goto('/');
     } catch (err: unknown) {
-      apiError = err instanceof Error ? err.message : 'Login failed';
+      if (err instanceof ApiError && err.statusCode === 409) {
+        apiError = 'Email already registered';
+      } else {
+        apiError = err instanceof Error ? err.message : 'Registration failed';
+      }
     } finally {
       loading = false;
     }
@@ -53,13 +60,13 @@
 </script>
 
 <svelte:head>
-  <title>Login — chatz</title>
+  <title>Register — chatz</title>
 </svelte:head>
 
 <main>
   <div class="card">
-    <h1>Sign in</h1>
-    <p class="subtitle">Welcome back to chatz</p>
+    <h1>Create account</h1>
+    <p class="subtitle">Join chatz today</p>
 
     <form onsubmit={handleSubmit} novalidate>
       <div class="field">
@@ -78,6 +85,21 @@
       </div>
 
       <div class="field">
+        <Label for="nickname">Nickname</Label>
+        <Input
+          id="nickname"
+          type="text"
+          autocomplete="off"
+          bind:value={nickname}
+          placeholder="Your display name"
+          aria-invalid={!!fieldErrors.nickname}
+        />
+        {#if fieldErrors.nickname}
+          <span class="error">{fieldErrors.nickname}</span>
+        {/if}
+      </div>
+
+      <div class="field">
         <Label for="password">Password</Label>
         <Input
           id="password"
@@ -92,17 +114,32 @@
         {/if}
       </div>
 
+      <div class="field">
+        <Label for="confirmPassword">Confirm Password</Label>
+        <Input
+          id="confirmPassword"
+          type="password"
+          autocomplete="off"
+          bind:value={confirmPassword}
+          placeholder="••••••••"
+          aria-invalid={!!fieldErrors.confirmPassword}
+        />
+        {#if fieldErrors.confirmPassword}
+          <span class="error">{fieldErrors.confirmPassword}</span>
+        {/if}
+      </div>
+
       {#if apiError}
         <p class="api-error">{apiError}</p>
       {/if}
 
       <Button type="submit" class="submit-btn" disabled={loading}>
-        {loading ? 'Signing in…' : 'Sign in'}
+        {loading ? 'Creating account…' : 'Create account'}
       </Button>
     </form>
 
     <p class="footer-link">
-      Don't have an account? <a href="/register">Register</a>
+      Already have an account? <a href="/login">Sign in</a>
     </p>
     <p class="footer-link">
       <a href="/forgot-password">Forgot password?</a>

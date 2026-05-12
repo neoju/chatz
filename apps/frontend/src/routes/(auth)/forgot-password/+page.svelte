@@ -1,21 +1,18 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
   import { auth } from '$lib/stores/auth';
-
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
-
-  import { LoginRequestSchema } from '@chatz/dto';
+  import { ForgotPasswordRequestSchema } from '@chatz/dto';
 
   let email = $state('');
-  let password = $state('');
   let fieldErrors = $state<Record<string, string>>({});
   let apiError = $state('');
   let loading = $state(false);
+  let sent = $state(false);
 
   function validate() {
-    const result = LoginRequestSchema.safeParse({ email, password });
+    const result = ForgotPasswordRequestSchema.safeParse({ email });
 
     if (!result.success) {
       const map: Record<string, string> = {};
@@ -30,7 +27,6 @@
     }
 
     fieldErrors = {};
-
     return true;
   }
 
@@ -42,10 +38,11 @@
 
     loading = true;
     try {
-      await auth.login({ email, password });
-      goto('/');
+      await auth.forgotPassword(email);
+      sent = true;
+      sessionStorage.setItem('pw_reset_email', email);
     } catch (err: unknown) {
-      apiError = err instanceof Error ? err.message : 'Login failed';
+      apiError = err instanceof Error ? err.message : 'Request failed';
     } finally {
       loading = false;
     }
@@ -53,60 +50,49 @@
 </script>
 
 <svelte:head>
-  <title>Login — chatz</title>
+  <title>Forgot Password — chatz</title>
 </svelte:head>
 
 <main>
   <div class="card">
-    <h1>Sign in</h1>
-    <p class="subtitle">Welcome back to chatz</p>
+    <h1>Reset your password</h1>
+    <p class="subtitle">Enter your email and we'll send you a reset link</p>
 
-    <form onsubmit={handleSubmit} novalidate>
-      <div class="field">
-        <Label for="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          autocomplete="off"
-          bind:value={email}
-          placeholder="you@example.com"
-          aria-invalid={!!fieldErrors.email}
-        />
-        {#if fieldErrors.email}
-          <span class="error">{fieldErrors.email}</span>
+    {#if sent}
+      <p class="text-center">If your email is registered, you will receive a reset link.</p>
+      <p class="footer-link">
+        <Button variant="link" href="/login">Back to sign in</Button>
+      </p>
+    {:else}
+      <form onsubmit={handleSubmit} novalidate>
+        <div class="field">
+          <Label for="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            autocomplete="off"
+            bind:value={email}
+            placeholder="you@example.com"
+            aria-invalid={!!fieldErrors.email}
+          />
+          {#if fieldErrors.email}
+            <span class="error">{fieldErrors.email}</span>
+          {/if}
+        </div>
+
+        {#if apiError}
+          <p class="api-error">{apiError}</p>
         {/if}
-      </div>
 
-      <div class="field">
-        <Label for="password">Password</Label>
-        <Input
-          id="password"
-          type="password"
-          autocomplete="off"
-          bind:value={password}
-          placeholder="••••••••"
-          aria-invalid={!!fieldErrors.password}
-        />
-        {#if fieldErrors.password}
-          <span class="error">{fieldErrors.password}</span>
-        {/if}
-      </div>
+        <Button type="submit" class="submit-btn cursor-pointer" disabled={loading}>
+          {loading ? 'Sending…' : 'Send reset link'}
+        </Button>
+      </form>
 
-      {#if apiError}
-        <p class="api-error">{apiError}</p>
-      {/if}
-
-      <Button type="submit" class="submit-btn" disabled={loading}>
-        {loading ? 'Signing in…' : 'Sign in'}
-      </Button>
-    </form>
-
-    <p class="footer-link">
-      Don't have an account? <a href="/register">Register</a>
-    </p>
-    <p class="footer-link">
-      <a href="/forgot-password">Forgot password?</a>
-    </p>
+      <p class="footer-link">
+        <Button variant="link" href="/login">Back to sign in</Button>
+      </p>
+    {/if}
   </div>
 </main>
 
@@ -173,11 +159,5 @@
     font-size: 0.875rem;
     color: var(--muted-foreground);
     text-align: center;
-  }
-
-  .footer-link a {
-    color: var(--foreground);
-    text-decoration: underline;
-    text-underline-offset: 2px;
   }
 </style>

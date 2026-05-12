@@ -128,4 +128,8 @@
   html {
     @apply font-sans overscroll-none;
   }
+
+  .submit-btn {
+    @apply hover:cursor-pointer w-full mt-2;
+  }
 }

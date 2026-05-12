@@ -5,7 +5,10 @@ export default [
   {
     languageOptions: {
       parserOptions: {
-        tsconfigRootDir: import.meta.dirname
+        tsconfigRootDir: import.meta.dirname,
+        projectService: {
+          allowDefaultProject: ['vitest.config.ts']
+        }
       }
     }
   }
