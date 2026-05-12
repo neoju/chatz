@@ -29,15 +29,15 @@ server.register(emailPlugin);
 server.register(rateLimit, { max: 100, timeWindow: '1 minute' });
 server.register(errorHandler);
 
-server.register(authRouter, { prefix: '/api' });
+server.register(authRouter, { prefix: '/api/v1' });
 server.register(
   async function (app) {
     await app.register(authMiddleware);
 
-    app.register(userRouter, { prefix: '/users' });
-    app.register(conversationRouter, { prefix: '/v1' });
+    app.register(userRouter);
+    app.register(conversationRouter);
   },
-  { prefix: '/api' }
+  { prefix: '/api/v1' }
 );
 
 server.get('/health', () => {

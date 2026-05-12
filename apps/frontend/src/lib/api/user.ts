@@ -8,5 +8,5 @@ export type UserProfile = {
 };
 
 export const userApi = {
-  me: () => api.get<UserProfile>("/users/me"),
+  me: () => api.get<UserProfile>("/v1/me"),
 };

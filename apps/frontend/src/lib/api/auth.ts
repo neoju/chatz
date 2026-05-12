@@ -3,14 +3,14 @@ import type { LoginRequest, RegisterRequest, AuthResponse } from "@chatz/dto";
 import type { ForgotPasswordResponse, ResetPasswordRequest } from "@chatz/dto";
 
 export const authApi = {
-  login: (data: LoginRequest) => api.post<AuthResponse>("/login", data),
+  login: (data: LoginRequest) => api.post<AuthResponse>("/v1/login", data),
 
   register: (data: RegisterRequest) =>
-    api.post<AuthResponse>("/register", data),
+    api.post<AuthResponse>("/v1/register", data),
 
   forgotPassword: (email: string) =>
-    api.post<ForgotPasswordResponse>("/forgot-password", { email }),
+    api.post<ForgotPasswordResponse>("/v1/forgot-password", { email }),
 
   resetPassword: (data: ResetPasswordRequest) =>
-    api.post<void>("/reset-password", data),
+    api.post<void>("/v1/reset-password", data),
 };
