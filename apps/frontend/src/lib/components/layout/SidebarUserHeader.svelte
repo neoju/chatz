@@ -8,6 +8,7 @@
     SidebarMenuItem,
     SidebarMenuButton,
   } from '$lib/components/ui/sidebar';
+  import { chatStore } from '$lib/stores/chat.svelte';
   import { slide, fly, fade } from 'svelte/transition';
 
   interface Props {
@@ -20,18 +21,18 @@
 
   const { name, subtitle = '', avatarUrl, online = false, onSearch }: Props = $props();
 
-  let isSearching = $state(false);
   let searchQuery = $state('');
   let headerContainer: HTMLElement | undefined = $state();
+  let searchInput = $state<HTMLInputElement | null>(null);
 
   function toggleSearch(e?: Event) {
     e?.stopPropagation();
-    isSearching = !isSearching;
-    if (!isSearching) searchQuery = '';
+    chatStore.isSearching = !chatStore.isSearching;
+    if (!chatStore.isSearching) searchQuery = '';
   }
 
   function handleCloseSearch() {
-    isSearching = false;
+    chatStore.isSearching = false;
     searchQuery = '';
     // TODO: Handle search result click here
   }
@@ -46,7 +47,7 @@
 
   // Handle click outside
   $effect(() => {
-    if (!isSearching) return;
+    if (!chatStore.isSearching) return;
 
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as HTMLElement;
@@ -60,9 +61,35 @@
       }
     }
 
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+    // Wait a tick to avoid catching the same click that opened the search
+    const timer = setTimeout(() => {
+      document.addEventListener('click', handleClickOutside);
+    }, 0);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('click', handleClickOutside);
+    };
   });
+// Focus search input when it appears
+$effect(() => {
+  if (chatStore.isSearching && searchInput) {
+    searchInput.focus();
+
+    // Repeatedly attempt to focus in case mobile sidebar dialog/sheet steals focus during its animation
+    let attempts = 0;
+    const intervalId = setInterval(() => {
+      if (searchInput && document.activeElement !== searchInput) {
+        searchInput.focus();
+      }
+      if (++attempts > 10) clearInterval(intervalId); // Stop after 500ms
+    }, 50);
+
+    return () => clearInterval(intervalId);
+  }
+  return;
+});
+
 
   $effect(() => {
     onSearch?.(searchQuery);
@@ -94,7 +121,7 @@
         </div>
 
         <div class="search-action">
-          {#if !isSearching}
+          {#if !chatStore.isSearching}
             <div in:fly={{ y: 44, duration: 400 }} out:fly={{ y: 44, duration: 400 }}>
               <Button
                 variant="ghost"
@@ -112,15 +139,15 @@
     </SidebarMenuItem>
   </SidebarMenu>
 
-  {#if isSearching}
+  {#if chatStore.isSearching}
     <div transition:slide={{ duration: 400 }} class="search-bar">
       <div class="search-bar-inner">
         <div class="search-input-wrapper">
           <Input
+            bind:ref={searchInput}
             bind:value={searchQuery}
             placeholder="Search conversation..."
             class="search-input"
-            autofocus
           />
           <button 
             class="search-icon-suffix" 

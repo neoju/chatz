@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { SidebarTrigger } from '$lib/components/ui/sidebar';
+  import { SidebarTrigger, useSidebar } from '$lib/components/ui/sidebar';
   import type { ChatMessage } from "$lib/types/chat";
   import MessageList from "$lib/components/chat/MessageList.svelte";
   import ChatInput from "$lib/components/chat/ChatInput.svelte";
@@ -16,6 +16,7 @@
   }
 
   const { toggleDetail }: Props = $props();
+  const sidebar = useSidebar();
 
   let messages = $state<ChatMessage[]>([]);
   let nextCursor = $state<string | null>(null);
@@ -128,22 +129,24 @@
       messages = [...messages, botMsg];
     }, 500);
   }
+
+  function startNewConversation(e: MouseEvent) {
+    e.stopPropagation();
+    chatStore.isSearching = true;
+    if (sidebar.isMobile) {
+      sidebar.setOpenMobile(true);
+    } else {
+      sidebar.setOpen(true);
+    }
+  }
 </script>
 
 <div class="chat-container bg-background">
-  {#if !chatStore.activeConversationId}
-    <div class="flex flex-1 flex-col items-center justify-center p-8 text-center">
-      <div class="mb-4 rounded-full bg-muted p-6">
-        <MessageSquare class="h-12 w-12 text-muted-foreground" />
-      </div>
-      <h3 class="text-xl font-semibold">Welcome to Chatz</h3>
-      <p class="mt-2 text-muted-foreground">Select a conversation from the sidebar to start chatting.</p>
+  <header class="chat-header" class:welcome-header={!chatStore.activeConversationId}>
+    <div class="mobile-trigger">
+      <SidebarTrigger />
     </div>
-  {:else}
-    <header class="chat-header">
-      <div class="mobile-trigger">
-        <SidebarTrigger />
-      </div>
+    {#if chatStore.activeConversationId}
       <div class="chat-info">
         <h2 class="text-sm font-semibold">Conversation</h2>
         <p class="text-xs text-muted-foreground">Active</p>
@@ -153,8 +156,24 @@
           <Info class="h-5 w-5" />
         </Button>
       </div>
-    </header>
-    
+    {/if}
+  </header>
+
+  {#if !chatStore.activeConversationId}
+    <div class="flex flex-1 flex-col items-center justify-center p-8 text-center">
+      <div class="mb-4 rounded-full bg-muted p-6">
+        <MessageSquare class="h-12 w-12 text-muted-foreground" />
+      </div>
+      <h3 class="text-xl font-semibold">Welcome to Chatz</h3>
+      <p class="mt-2 text-muted-foreground">Select a conversation from the sidebar to start chatting.</p>
+      <div class="mt-6 flex items-center gap-2">
+        <span class="text-sm text-muted-foreground">or</span>
+        <Button variant="outline" onclick={startNewConversation}>
+          start new conversation
+        </Button>
+      </div>
+    </div>
+  {:else}
     <div class="chat-content border-t">
       {#if loading}
         <div class="flex flex-1 items-center justify-center">
@@ -192,6 +211,10 @@
     background-color: hsl(var(--background));
   }
 
+  .welcome-header {
+    display: none;
+  }
+
   .chat-info {
     flex: 1;
   }
@@ -216,6 +239,10 @@
   @media (max-width: 768px) {
     .mobile-trigger {
       display: block;
+    }
+
+    .welcome-header {
+      display: flex;
     }
   }
 </style>
