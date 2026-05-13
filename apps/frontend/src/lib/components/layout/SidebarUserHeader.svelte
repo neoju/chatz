@@ -10,6 +10,7 @@
   } from '$lib/components/ui/sidebar';
   import { chatStore } from '$lib/stores/chat.svelte';
   import { slide, fly, fade } from 'svelte/transition';
+    import UserAvatar from '../UserAvatar.svelte';
 
   interface Props {
     name: string;
@@ -100,18 +101,7 @@ $effect(() => {
   <SidebarMenu>
     <SidebarMenuItem>
       <SidebarMenuButton size="lg" class="user-header-btn">
-        <Avatar.Root size="lg" class="shrink-0">
-          {#if avatarUrl}
-            <Avatar.Image src={avatarUrl} alt={name} />
-          {:else if name}
-            <Avatar.Fallback class="user-avatar-fallback">
-              {name?.charAt(0).toUpperCase()}
-            </Avatar.Fallback>
-          {/if}
-          {#if online}
-            <Avatar.Badge class="bg-green-500" />
-          {/if}
-        </Avatar.Root>
+        <UserAvatar username={name} avatarUrl={avatarUrl} onlineIndicator={true} online />
 
         <div class="user-info">
           <span class="user-name">{name}</span>

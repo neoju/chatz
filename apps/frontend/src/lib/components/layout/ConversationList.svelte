@@ -7,7 +7,7 @@
   import { ConversationType } from '@chatz/shared';
   import ConversationItem from './ConversationItem.svelte';
   import * as Tooltip from '$lib/components/ui/tooltip';
-  import { SidebarMenu, SidebarMenuItem } from '$lib/components/ui/sidebar';
+  import { SidebarMenu, SidebarMenuItem, useSidebar } from '$lib/components/ui/sidebar';
 
   interface Props {
     activeFilter: string;
@@ -15,6 +15,7 @@
 
   let { activeFilter }: Props = $props();
 
+  const sidebar = useSidebar();
   let conversations = $state<ListConversationsResponse>([]);
   let nextCursor = $state<string | null>(null);
   let loading = $state(false);
@@ -24,6 +25,9 @@
 
   function selectConversation(id: string) {
     chatStore.activeConversationId = id;
+    if (sidebar.isMobile) {
+      sidebar.setOpenMobile(false);
+    }
   }
 
   function formatTimestamp(isoString: string): string {

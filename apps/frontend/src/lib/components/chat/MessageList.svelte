@@ -1,8 +1,8 @@
 <script lang="ts">
   import { tick } from "svelte";
+  import { Loader } from "@lucide/svelte";
   import type { ChatMessage } from "$lib/types/chat";
   import MessageItem from "./MessageItem.svelte";
-  import { Loader2 } from "@lucide/svelte";
 
   interface Props {
     messages: ChatMessage[];
@@ -98,7 +98,7 @@
     {#if hasMore}
       <div class="flex justify-center p-4">
         {#if loadingMore}
-          <Loader2 class="animate-spin text-muted-foreground" size={20} />
+          <Loader class="animate-spin text-muted-foreground" size={20} />
         {:else}
           <div class="h-1"></div>
         {/if}

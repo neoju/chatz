@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { ChatMessage } from "$lib/types/chat";
-  import * as Avatar from "$lib/components/ui/avatar";
   import { cn } from "$lib/utils";
+  import UserAvatar from "../UserAvatar.svelte";
 
   let { message }: { message: ChatMessage } = $props();
 
@@ -14,14 +14,9 @@
     isUser ? "flex-row-reverse" : "flex-row"
   )}
 >
-  <Avatar.Root class="h-8 w-8 shrink-0">
-    {#if message.sender.avatarUrl}
-      <Avatar.Image src={message.sender.avatarUrl} alt={message.sender.name} />
-    {/if}
-    <Avatar.Fallback class={isUser ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}>
-      {message.sender.name?.charAt(0).toUpperCase()}
-    </Avatar.Fallback>
-  </Avatar.Root>
+  {#if !isUser}
+    <UserAvatar username={message.sender.name} avatarUrl={message.sender.avatarUrl} />
+  {/if}
 
   <div class={cn(
     "flex flex-col max-w-[80%] gap-1",

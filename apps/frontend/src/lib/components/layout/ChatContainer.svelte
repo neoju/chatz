@@ -4,7 +4,7 @@
   import MessageList from "$lib/components/chat/MessageList.svelte";
   import ChatInput from "$lib/components/chat/ChatInput.svelte";
   import { Button } from "$lib/components/ui/button";
-  import { Info, MessageSquare, Loader2 } from "@lucide/svelte";
+  import { Info, MessageSquare, Loader } from "@lucide/svelte";
   import { chatStore } from "$lib/stores/chat.svelte";
   import { messageApi } from "$lib/api/message";
   import { conversationApi } from "$lib/api/conversation";
@@ -112,22 +112,6 @@
       createdAt: new Date()
     };
     messages = [...messages, userMsg];
-
-    // TODO: Integrate with backend sendMessage API
-    setTimeout(() => {
-      const botMsg: ChatMessage = {
-        id: crypto.randomUUID(),
-        content: `I received your message: "${content}"\nThis is a mock response.`,
-        role: 'assistant',
-        sender: {
-          id: 'bot',
-          name: 'Chat Bot',
-          avatarUrl: null
-        },
-        createdAt: new Date()
-      };
-      messages = [...messages, botMsg];
-    }, 500);
   }
 
   function startNewConversation(e: MouseEvent) {
@@ -177,7 +161,7 @@
     <div class="chat-content border-t">
       {#if loading}
         <div class="flex flex-1 items-center justify-center">
-          <Loader2 class="h-8 w-8 animate-spin text-muted-foreground" />
+          <Loader class="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       {:else}
         <MessageList 

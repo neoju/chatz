@@ -29,7 +29,7 @@
       placeholder="Type your message..."
       bind:value={content}
       onkeydown={handleKeydown}
-      class="min-h-[60px] max-h-[200px] resize-none pr-12"
+      class="min-h-15 max-h-50 resize-none pr-12"
     />
     <Button 
       size="icon" 

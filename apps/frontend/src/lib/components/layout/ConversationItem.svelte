@@ -1,9 +1,9 @@
 <script lang="ts">
-  import * as Avatar from '$lib/components/ui/avatar';
   import { cn } from '$lib/utils';
   import { Check, CheckCheck } from '@lucide/svelte';
   import type { ListConversationsResponse } from '@chatz/dto';
   import { ConversationType } from '@chatz/shared';
+  import UserAvatar from '../UserAvatar.svelte';
 
   interface Props {
     conversation: ListConversationsResponse[number];
@@ -47,20 +47,7 @@
   )}
   {onclick}
 >
-  <div class="relative flex-shrink-0">
-    <Avatar.Root class="avatar transition-all">
-      {#if avatarUrl}
-        <Avatar.Image src={avatarUrl} alt={name} />
-      {:else}
-        <Avatar.Fallback class="avatar-fallback">
-          {name?.charAt(0).toUpperCase()}
-        </Avatar.Fallback>
-      {/if}
-    </Avatar.Root>
-    {#if online}
-      <div class="online-indicator"></div>
-    {/if}
-  </div>
+  <UserAvatar username={name} avatarUrl={avatarUrl} onlineIndicator={isDM} online={online} />
 
   <div class="content-wrapper">
     <div class="flex items-center justify-between">
@@ -70,19 +57,13 @@
     <div class="flex items-center justify-between gap-2">
       <p class={cn("truncate text-xs flex items-center gap-1.5", isTyping ? "text-green-500" : "text-gray-500")}>
         {#if !isDM && lastMessageSenderName}
-          <Avatar.Root class="size-4">
-            {#if lastMessageSenderAvatarUrl}
-              <Avatar.Image src={lastMessageSenderAvatarUrl} alt={lastMessageSenderName} />
-            {:else}
-              <Avatar.Fallback class="text-[8px] bg-blue-100 text-blue-600">
-                {lastMessageSenderName.charAt(0).toUpperCase()}
-              </Avatar.Fallback>
-            {/if}
-          </Avatar.Root>
+          <UserAvatar classname="size-4" username={lastMessageSenderName} avatarUrl={lastMessageSenderAvatarUrl} />
+
           <span class="truncate font-medium text-gray-700">{lastMessageSenderName}:</span>
         {/if}
         <span class="truncate">{lastMessage}</span>
       </p>
+
       <div class="flex shrink-0 items-center gap-1">
         {#if unreadCount > 0}
           <div class="unread-badge">
@@ -116,20 +97,6 @@
 
   .conversation-item.has-unread {
     @apply bg-blue-50/60;
-  }
-
-  .avatar {
-    @apply size-11 border-2 border-white;
-    @apply group-data-[collapsible=icon]:size-9;
-  }
-
-  .avatar-fallback {
-    @apply bg-blue-100 text-blue-600 font-medium;
-  }
-
-  .online-indicator {
-    @apply absolute bottom-0 right-0 size-3 rounded-full border-2 border-white bg-green-500 transition-all;
-    @apply group-data-[collapsible=icon]:size-2.5;
   }
 
   .content-wrapper {
